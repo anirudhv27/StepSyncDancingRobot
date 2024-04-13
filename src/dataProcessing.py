@@ -3,6 +3,7 @@ import mediapipe as mp
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from pytube import YouTube
+import numpy as np
 
 def download_youtube_video(url, path):
     """
@@ -31,45 +32,60 @@ def download_youtube_video(url, path):
         print(f"Failed to download video: {str(e)}")
         return False
 
-def process_video(video_path):
-    # Initialize mediapipe pose solution
+# Initialize the video writer.
+def setup_video_writer(cap, output_filename='output_video.mp4'):
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    return cv2.VideoWriter(output_filename, fourcc, fps, (width, height))
+
+# Process each video frame.
+def process_video(input_video_path, output_video_path):
+    cap = cv2.VideoCapture(input_video_path)
+    writer = setup_video_writer(cap, output_video_path)
+    # Initialize MediaPipe Pose.
     mp_pose = mp.solutions.pose
-    pose = mp_pose.Pose(static_image_mode=False, min_detection_confidence=0.5)
+    pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5, model_complexity=0) # , model_complexity={0,1,2} (fastest to slowest)
 
-    # Capture video
-    cap = cv2.VideoCapture(video_path)
-    plt.figure(figsize=(12, 6))
-    ims = []
+    landmarks = []
 
+    print('Processing video...')
     while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
+        success, frame = cap.read()
+        if not success:
             break
-
+        
         # Convert the BGR image to RGB.
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image.flags.writeable = False
+        height, width, channels = image.shape
+        
+        # Make detection.
+        results = pose.process(image)
+        landmarks.append(results.pose_landmarks)
+        
+        # Draw the pose annotations on the image.
+        keypoints = np.zeros((height, width, channels), dtype="uint8")
+        
+        mp_pose.POSE_CONNECTIONS
+        mp_drawing = mp.solutions.drawing_utils
+        if results.pose_landmarks:
+            mp_drawing.draw_landmarks(keypoints, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
 
-        # Process the image to get the pose
-        results = pose.process(rgb_frame)
-
-        # Draw pose landmarks
-        mp_draw = mp.solutions.drawing_utils
-        annotated_image = rgb_frame.copy()
-        mp_draw.draw_landmarks(
-            annotated_image, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-
-        # Convert RGB to BGR for OpenCV
-        annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
-
-        # Display side by side
-        im = plt.imshow(cv2.hconcat([frame, annotated_image]), animated=True)
-        ims.append([im])
-
-    ani = animation.ArtistAnimation(plt.gcf(), ims, interval=50, blit=True, repeat_delay=1000)
-    plt.show()
+        # Write the frame with annotations.
+        writer.write(keypoints)
 
     cap.release()
-
-download_youtube_video('https://www.youtube.com/watch?v=9TWj9I3CKzg', '../data/bollywood.mp4')
-# Example usage:
-process_video("../data/bollywood.mp4")
+    writer.release()
+    return landmarks
+    
+if __name__ == '__main__':
+    danceURL = input('Link your desired dance here: ')
+    filename = input('What are you labeling this file?')
+    input_path = '../data/{filename}.mp4'
+    output_path = '../keypoints/{filename}.mp4'
+    download_youtube_video(danceURL, '../data/{filename}.mp4')
+    # Example usage:
+    _ = process_video("../data/{filename}.mp4", output_path)
+    
+    print('Enjoy!')
