@@ -1,3 +1,4 @@
+#%%
 import cv2
 import mediapipe as mp
 import matplotlib.pyplot as plt
@@ -46,7 +47,7 @@ def process_video(input_video_path, output_video_path):
     # Initialize MediaPipe Pose.
     mp_pose = mp.solutions.pose
     pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5, model_complexity=0) # , model_complexity={0,1,2} (fastest to slowest)
-
+    
     landmarks = []
 
     print('Processing video...')
@@ -79,13 +80,14 @@ def process_video(input_video_path, output_video_path):
     writer.release()
     return landmarks
     
-if __name__ == '__main__':
-    danceURL = input('Link your desired dance here: ')
-    filename = input('What are you labeling this file?')
-    input_path = '../data/{filename}.mp4'
-    output_path = '../keypoints/{filename}.mp4'
-    download_youtube_video(danceURL, '../data/{filename}.mp4')
-    # Example usage:
-    _ = process_video("../data/{filename}.mp4", output_path)
-    
-    print('Enjoy!')
+# danceURL = input('Link your desired dance here: ')
+danceURL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
+# filename = input('What are you labeling this file? ')
+filename = 'badtameez_dil'
+input_path = f'../data/{filename}.mp4'
+output_path = f'../keypoints/{filename}.mp4'
+download_youtube_video(danceURL, input_path)
+# Example usage:
+
+#%%
+landmarks = process_video(input_path, output_path)
