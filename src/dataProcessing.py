@@ -63,6 +63,9 @@ def process_video(input_video_path, output_video_path):
         # Make detection.
         results = pose.process(image)
         landmarks.append(results.pose_landmarks)
+
+        if (results.pose_landmarks == None):
+            print (len(landmarks))
         
         # Draw the pose annotations on the image.
         keypoints = np.zeros((height, width, channels), dtype="uint8")
@@ -77,6 +80,10 @@ def process_video(input_video_path, output_video_path):
 
     cap.release()
     writer.release()
+
+    print (len(landmarks))
+    print (landmarks[1000])
+    print (type(landmarks))
     return landmarks
     
 # danceURL = input('Link your desired dance here: ')
