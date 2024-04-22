@@ -1,4 +1,3 @@
-#%%
 import cv2
 import mediapipe as mp
 import matplotlib.pyplot as plt
@@ -88,6 +87,4 @@ input_path = f'../data/{filename}.mp4'
 output_path = f'../keypoints/{filename}.mp4'
 download_youtube_video(danceURL, input_path)
 # Example usage:
-
-#%%
 landmarks = process_video(input_path, output_path)
