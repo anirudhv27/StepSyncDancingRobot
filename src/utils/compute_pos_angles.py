@@ -79,7 +79,7 @@ def compute_angular_velocity_2(q1, q2, FRAME_DIFF, FRAMES_PER_SECOND):
     
     return angular_velocity
 
-def compute_angular_velocity(q1, q2, q3):
+def compute_angular_velocity(q1, q2, q3, FRAME_DIFF, FRAMES_PER_SECOND):
     """
     Compute the angular velocity at q2.
     
@@ -93,8 +93,8 @@ def compute_angular_velocity(q1, q2, q3):
     """
     
     # Compute the angular velocities
-    angular_velocity_12 = compute_angular_velocity_2(q1, q2)
-    angular_velocity_23 = compute_angular_velocity_2(q2, q3)
+    angular_velocity_12 = compute_angular_velocity_2(q1, q2, FRAME_DIFF, FRAMES_PER_SECOND)
+    angular_velocity_23 = compute_angular_velocity_2(q2, q3, FRAME_DIFF, FRAMES_PER_SECOND)
     
     # Compute the average angular velocity
     angular_velocity = (angular_velocity_12 + angular_velocity_23) / 2
@@ -179,14 +179,14 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
             prev_angle = angles[i - 1][key]
             angle = angles_dict[key]
             next_angle = angles[i + 1][key]
-            angle_velocities_dict[key] = compute_angular_velocity(prev_angle, angle, next_angle)       
+            angle_velocities_dict[key] = compute_angular_velocity(prev_angle, angle, next_angle, FRAME_DIFF, FRAMES_PER_SECOND)       
         angle_velocities.append(angle_velocities_dict)
 
         for key in pos_dict.keys():
             prev_pos = pos[i - FRAME_DIFF][key]
             curr_pos = pos_dict[key]
             next_pos = pos[i + FRAME_DIFF][key]
-            velocities_dict[key] = compute_velocity(prev_pos, curr_pos, next_pos)       
+            velocities_dict[key] = compute_velocity(prev_pos, curr_pos, next_pos, FRAME_DIFF, FRAMES_PER_SECOND)       
         angle_velocities.append(angle_velocities_dict)
         velocities.append(velocities_dict)
     

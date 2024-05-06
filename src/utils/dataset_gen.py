@@ -8,7 +8,6 @@ import math
 from scipy.spatial.transform import Rotation as R
 from .compute_pos_angles import compute_pos_angles
 import matplotlib.pyplot as plt
-from utils.compute_pos_angles import compute_pos_angles
 FRAMES_PER_SECOND = 30
 FRAME_DIFF = 3
 
@@ -87,22 +86,22 @@ def process_video(input_video_path, output_video_path):
 
     cap.release()
     writer.release()
-
-    print (len(landmarks))
-    print (landmarks[1000])
-    print (type(landmarks))
     return landmarks
     
-def gen_dataset_from_urls(url_list):
-    dataset = []
-    index = 0
-    for danceURL in url_list:
-        filename = f'dance{index}'
-        input_path = f'../data/{filename}.mp4'
-        output_path = f'../keypoints/{filename}.mp4'
-        download_youtube_video(danceURL, input_path)
-        landmarks = process_video(f"../data/{filename}.mp4", output_path)
-        features = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND)
-        dataset.append(features)
-
+def gen_dataset_from_url(danceURL, filename='dance'):
+    input_path = f'../data/{filename}.mp4'
+    output_path = f'../keypoints/{filename}.mp4'
+    download_youtube_video(danceURL, input_path)
+    landmarks = process_video(f"../data/{filename}.mp4", output_path)
+    dataset = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND)
+    
     return dataset
+
+if __name__ == '__main__':
+    danceURL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
+    filename = 'dance'
+    input_path = f'../../data/{filename}.mp4'
+    output_path = f'../../keypoints/{filename}.mp4'
+    download_youtube_video(danceURL, input_path)
+    # Example usage:
+    landmarks = process_video(input_path, output_path)

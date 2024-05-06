@@ -1,8 +1,10 @@
 import gym
 import pybullet_envs
 from pybullet_envs.deep_mimic.gym_env.deep_mimic_env import HumanoidDeepBulletEnv
+from utils.dataset_gen import gen_dataset_from_url
 import matplotlib.pyplot as plt
 import mediapipe as mp
+import pickle
 
 import numpy as np
 
@@ -12,7 +14,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
     def __init__(self, renders=False, arg_file='', test_mode=False,
                  time_step=1./240, rescale_actions=True, rescale_observations=True,
                  custom_cam_dist=4, custom_cam_pitch=0.1, custom_cam_yaw=45,
-                 video_URL=None, imitation_video_path=None, keypoints):
+                 video_URL=None, dataset_pkl_path=None):
         
         super().__init__(renders=renders, arg_file=arg_file, test_mode=test_mode,
                          time_step=time_step, rescale_actions=rescale_actions, 
@@ -27,10 +29,14 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         mp_pose = mp.solutions.pose
         self.pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5, model_complexity=0) # , model_complexity={0,1,2} (fastest to slowest)    
         
-        # If video_to_imitate is in a URL, download the video an save it to
-        print('Downloading video...')
-        
-        self.target_poses
+        # If dataset_pkl is none, download video from URL
+        filename = 'bollywood_dance_test'
+        if video_URL is not None:
+            print('Downloading video...')
+            self.target_poses = gen_dataset_from_url(video_URL, filename)
+            # pickle.dump(self.target_poses, open(dataset_pkl_path, 'wb'))
+        else:
+            self.target_poses = pickle.load(open(dataset_pkl_path, 'rb'))
 
     def render(self, mode='human', close=False):
         if mode == "human":

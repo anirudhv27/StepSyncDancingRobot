@@ -10,7 +10,15 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_checker import check_env
 
-env = CustomHumanoidDeepBulletEnv(renders=True, arg_file='run_humanoid3d_dance_b_args.txt', custom_cam_dist=2.2, custom_cam_pitch=0, custom_cam_yaw=90)
+TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
+env = CustomHumanoidDeepBulletEnv(renders=True, 
+                                  arg_file='run_humanoid3d_dance_b_args.txt', 
+                                  custom_cam_dist=2.2, 
+                                  custom_cam_pitch=0, 
+                                  custom_cam_yaw=90, 
+                                  video_URL=TARGET_VIDEO_URL)
+
+print('initialized env')
 
 # Instantiate the agent
 model = PPO("MlpPolicy", env, verbose=1)
