@@ -100,10 +100,10 @@ dependencies:
   - pure_eval
   - pycparser
   - pygments
-  - pyobjc-core
-  - pyobjc-framework-cocoa
+  # - pyobjc-core=10.2
+  # - pyobjc-framework-cocoa=10.2
   - pysocks
-  - python
+  - python=3.12.3
   - python-fastjsonschema
   - python-json-logger
   - python_abi
@@ -161,7 +161,7 @@ dependencies:
       - fonttools
       - fsspec
       - glfw
-      - gym
+      - gym==0.25.1
       - gym-notices
       - gymnasium
       - imageio
