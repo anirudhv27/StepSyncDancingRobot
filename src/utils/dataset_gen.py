@@ -107,5 +107,3 @@ def gen_dataset_from_urls(url_list):
         dataset.append(features)
 
     return dataset
-
-def features_from_image
