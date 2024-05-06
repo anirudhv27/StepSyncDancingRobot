@@ -132,6 +132,8 @@ def compute_velocity(p1, p2, p3, FRAME_DIFF, FRAMES_PER_SECOND):
 def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
     poses = []
     angles = []
+    print ("Landmarks:")
+    print (landmarks)
 
     for data_point in landmarks:
         pos_dict = dict()
@@ -190,8 +192,12 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
         angle_velocities.append(angle_velocities_dict)
         velocities.append(velocities_dict)
     
+    print (poses)
     poses = poses[FRAME_DIFF:len(poses) - FRAME_DIFF]
     angles = angles[FRAME_DIFF:len(angles) - FRAME_DIFF]
+
+    print (angles[0])
+    print (angles[0].values())
     
     return [
         {
@@ -201,4 +207,3 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
             'angle_velocity': angle_velocity
         } for pos, angle, velocity, angle_velocity in zip(poses, angles, velocities, angle_velocities)
     ]
-
