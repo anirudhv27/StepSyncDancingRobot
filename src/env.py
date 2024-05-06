@@ -12,7 +12,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
     def __init__(self, renders=False, arg_file='', test_mode=False,
                  time_step=1./240, rescale_actions=True, rescale_observations=True,
                  custom_cam_dist=4, custom_cam_pitch=0.1, custom_cam_yaw=45,
-                 video_URL=None, imitation_video_path=None):
+                 video_URL=None, imitation_video_path=None, keypoints):
         
         super().__init__(renders=renders, arg_file=arg_file, test_mode=test_mode,
                          time_step=time_step, rescale_actions=rescale_actions, 
@@ -23,12 +23,12 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         self._cam_yaw = custom_cam_yaw
         
         # Initialize mediapipe estimator
+        print('Initializing mediapipe estimator...')
         mp_pose = mp.solutions.pose
-        self.pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5, model_complexity=0) # , model_complexity={0,1,2} (fastest to slowest)
+        self.pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5, model_complexity=0) # , model_complexity={0,1,2} (fastest to slowest)    
         
-        
-        
-        # If video_to_imitate is in a URL, download the video an save it to 
+        # If video_to_imitate is in a URL, download the video an save it to
+        print('Downloading video...')
         
         self.target_poses
 
