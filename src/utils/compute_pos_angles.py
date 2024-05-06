@@ -193,5 +193,10 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
     pos = pos[FRAME_DIFF:len(pos) - FRAME_DIFF]
     angles = angles[FRAME_DIFF:len(angles) - FRAME_DIFF]
 
-    return pos, angles, velocities, angle_velocities
+    return {
+        'pos': pos, 
+        'angles': angles, 
+        'velocities': velocities, 
+        'angle_velocities': angle_velocities
+    }
 

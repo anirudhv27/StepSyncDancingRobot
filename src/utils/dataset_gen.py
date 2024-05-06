@@ -102,14 +102,10 @@ def gen_dataset_from_urls(url_list):
         output_path = f'../keypoints/{filename}.mp4'
         download_youtube_video(danceURL, input_path)
         landmarks = process_video("../data/{filename}.mp4", output_path)
+        features = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND)
 
-        pos, angles, velocities, angle_velocities = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND)
-
-        dataset.append({
-            "pos": pos,
-            "angles": angles,
-            "velocities": velocities,
-            "angle_velocities": angle_velocities
-        })
+        dataset.append(features)
 
     return dataset
+
+def features_from_image
