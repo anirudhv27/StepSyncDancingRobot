@@ -1,3 +1,0 @@
---scene imitate
-
---character_file data/characters/humanoid3d.txt

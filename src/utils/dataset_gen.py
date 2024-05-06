@@ -8,7 +8,7 @@ import math
 from scipy.spatial.transform import Rotation as R
 from .compute_pos_angles import compute_pos_angles
 import matplotlib.pyplot as plt
-from compute_pos_angles import compute_pos_angles
+from utils.compute_pos_angles import compute_pos_angles
 FRAMES_PER_SECOND = 30
 FRAME_DIFF = 3
 
