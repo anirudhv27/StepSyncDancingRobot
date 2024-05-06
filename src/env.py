@@ -57,3 +57,47 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         rgb_array = np.reshape(np.array(px), (self._render_height, self._render_width, -1))
         rgb_array = rgb_array[:, :, :3]
         return rgb_array
+    
+    def step(self, action):
+        agent_id = self.agent_id
+
+        if self._rescale_actions:
+            # Rescale the action
+            mean = -self._action_offset
+            std = 1./self._action_scale
+            action = action * std + mean
+
+        # Record reward
+        reward = self.calc_reward(agent_id)
+
+        # Apply control action
+        self._internal_env.set_action(agent_id, action)
+
+        start_time = self._internal_env.t
+
+        # step sim
+        for i in range(self._num_env_steps):
+            self._internal_env.update(self._time_step)
+
+        elapsed_time = self._internal_env.t - start_time
+
+        self._numSteps += 1
+
+        # Record state
+        self.state = self._internal_env.record_state(agent_id)
+        
+        if self._rescale_observations:
+            state = np.array(self.state)
+            mean = -self._state_offset
+            std = 1./self._state_scale 
+            state = (state - mean) / (std + 1e-8)
+
+        # Record done
+        done = self._internal_env.is_episode_end()
+        
+        info = {}
+        return state, reward, done, info
+    
+    def calc_reward(self, agent_id):
+        raise NotImplementedError
+        # return self._internal_env.calc_reward(agent_id)

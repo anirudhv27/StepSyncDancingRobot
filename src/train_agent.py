@@ -8,23 +8,29 @@ import gym
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3.common.env_checker import check_env
 
-# Create and wrap the environment
-env_name = "CartPole-v1"
-env = make_vec_env(env_name, n_envs=4)
+env = CustomHumanoidDeepBulletEnv(renders=True, arg_file='run_humanoid3d_dance_b_args.txt', custom_cam_dist=2.2, custom_cam_pitch=0, custom_cam_yaw=90)
 
+# Instantiate the agent
 model = PPO("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=25000)
 
-mean_reward, std_reward = evaluate_policy(model, model.get_env(), n_eval_episodes=10)
-print(f"Mean reward: {mean_reward}, Std reward: {std_reward}")
+# Train the agent
+model.learn(total_timesteps=10000)
 
-model.save("ppo_cartpole")
-loaded_model = PPO.load("ppo_cartpole", env=env)
+# Save the model
+model.save("ppo_humanoid_deep_bullet")
 
+# Load the model
+model = PPO.load("ppo_humanoid_deep_bullet")
+
+# Enjoy trained agent
 obs = env.reset()
-for _ in range(1000):
-    action, _states = loaded_model.predict(obs, deterministic=True)
-    obs, rewards, dones, info = env.step(action)
+for i in range(1000):
+    action, _states = model.predict(obs, deterministic=True)
+    obs, reward, done, info = env.step(action)
     env.render()
+    if done:
+      obs = env.reset()
+
 env.close()
