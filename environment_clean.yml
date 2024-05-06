@@ -64,6 +64,7 @@ dependencies:
   - jupyterlab_server
   - jupyterlab_widgets
   - libcxx
+  - libexpat
   - libffi
   - libsodium
   - libsqlite
@@ -99,8 +100,8 @@ dependencies:
   - pure_eval
   - pycparser
   - pygments
-  # - pyobjc-core
-  # - pyobjc-framework-cocoa
+  - pyobjc-core
+  - pyobjc-framework-cocoa
   - pysocks
   - python
   - python-fastjsonschema
@@ -148,19 +149,31 @@ dependencies:
   - zipp
   - pip:
       - absl-py
+      - cloudpickle
       - contourpy
       - cycler
+      - cython
+      - etils
+      - farama-notifications
+      - fasteners
       - filelock
       - flatbuffers
       - fonttools
       - fsspec
+      - glfw
+      - gym
+      - gym-notices
+      - gymnasium
+      - imageio
       - jax
       - jaxlib
       - kiwisolver
       - matplotlib
-      # - mediapipe
       - ml-dtypes
+      - mpi4py
       - mpmath
+      - mujoco
+      - mujoco-py
       - networkx
       - numpy
       - opencv-contrib-python
@@ -168,6 +181,8 @@ dependencies:
       - opt-einsum
       - pillow
       - protobuf
+      - pybullet
+      - pyopengl
       - pyparsing
       - python-dateutil
       - pytube
@@ -175,3 +190,4 @@ dependencies:
       - sounddevice
       - sympy
       - torch
+prefix: /Users/avaliveru/miniforge3/envs/stepsync
