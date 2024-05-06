@@ -16,7 +16,8 @@ env = CustomHumanoidDeepBulletEnv(renders=True,
                                   custom_cam_dist=2.2, 
                                   custom_cam_pitch=0, 
                                   custom_cam_yaw=90, 
-                                  video_URL=TARGET_VIDEO_URL)
+                                  video_URL=TARGET_VIDEO_URL,
+                                  dataset_pkl_path='bollywood_dance_test.pkl')
 
 print('initialized env')
 

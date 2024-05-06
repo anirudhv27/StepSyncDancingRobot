@@ -30,13 +30,18 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         self.pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5, model_complexity=0) # , model_complexity={0,1,2} (fastest to slowest)    
         
         # If dataset_pkl is none, download video from URL
+        if dataset_pkl_path is None:
+            raise ValueError('dataset_pkl_path cannot be None')
+        
         filename = 'bollywood_dance_test'
         if video_URL is not None:
             print('Downloading video...')
             self.target_poses = gen_dataset_from_url(video_URL, filename)
-            # pickle.dump(self.target_poses, open(dataset_pkl_path, 'wb'))
+            pickle.dump(self.target_poses, open(dataset_pkl_path, 'wb'))
         else:
             self.target_poses = pickle.load(open(dataset_pkl_path, 'rb'))
+        
+        print(len(self.target_poses))
 
     def render(self, mode='human', close=False):
         if mode == "human":
