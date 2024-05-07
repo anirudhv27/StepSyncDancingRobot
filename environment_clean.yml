@@ -100,10 +100,11 @@ dependencies:
   - pure_eval
   - pycparser
   - pygments
-  # - pyobjc-core=10.2
-  # - pyobjc-framework-cocoa=10.2
+  - pyobjc-core
+  - pyobjc-framework-cocoa
   - pysocks
-  - python=3.12.3
+  - python
+  - python-dateutil
   - python-fastjsonschema
   - python-json-logger
   - python_abi
@@ -134,7 +135,6 @@ dependencies:
   - typing-extensions
   - typing_extensions
   - typing_utils
-  - tzdata
   - uri-template
   - urllib3
   - wcwidth
@@ -152,42 +152,38 @@ dependencies:
       - cloudpickle
       - contourpy
       - cycler
-      - cython
-      - etils
       - farama-notifications
-      - fasteners
       - filelock
       - flatbuffers
       - fonttools
       - fsspec
-      - glfw
-      - gym==0.25.1
+      - gym
       - gym-notices
       - gymnasium
-      - imageio
       - jax
       - jaxlib
       - kiwisolver
       - matplotlib
+      - mediapipe
       - ml-dtypes
       - mpi4py
       - mpmath
-      - mujoco
-      - mujoco-py
       - networkx
       - numpy
       - opencv-contrib-python
-      - opencv-python
       - opt-einsum
+      - pandas
       - pillow
       - protobuf
       - pybullet
-      - pyopengl
+      - pygame
       - pyparsing
-      - python-dateutil
       - pytube
       - scipy
+      - shimmy
       - sounddevice
+      - stable-baselines3
       - sympy
       - torch
+      - tzdata
 prefix: /Users/avaliveru/miniforge3/envs/stepsync
