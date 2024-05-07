@@ -103,12 +103,16 @@ def compute_velocity(p1, p2, FRAME_DIFF, FRAMES_PER_SECOND):
 '''
 Computes and extracts landmarks from frame (RGB image) using MediaPipe Pose.
 '''
-def compute_pos_angles_from_frame(frame, mediapipe_pose):
+def extract_landmarks_from_frame(frame, mediapipe_pose):
     pos_dict = dict()
     angles_dict = dict()
     end_eff_pos_dict = dict()
     
-    points = mediapipe_pose.process(frame).pose_landmarks.landmark
+    try:
+        points = mediapipe_pose.process(frame).pose_landmarks.landmark
+    except:
+        print('could not extract points from this frame')
+        return None
     
     pos_dict["origin"] = [points[0].x, points[0].y, points[0].z]
     pos_dict["right_shoulder"] = [points[12].x, points[12].y, points[12].z]
@@ -150,6 +154,9 @@ def compute_pos_angles_from_frame(frame, mediapipe_pose):
     }
 
 def compute_velocities_between_poses(prev_pos, curr_pos, FRAME_DIFF, FRAMES_PER_SECOND):
+    if prev_pos is None:
+        return None
+    
     prev_pos_dict = prev_pos['pos']
     prev_angles_dict = prev_pos['angle']
     curr_pos_dict = curr_pos['pos']
@@ -172,97 +179,7 @@ def compute_velocities_between_poses(prev_pos, curr_pos, FRAME_DIFF, FRAMES_PER_
         'velocity': velocities_dict,
         'angle_velocity': angle_velocities_dict
     }
-
-def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
     
-    poses = []
-    end_eff_poses = []
-    angles = []
-    cen_mass = []
-
-    for data_point in landmarks:
-        pos_dict = dict()
-        end_eff_pos_dict = dict()
-        angles_dict = dict()
-        angle_velocities_dict = dict()
-
-        points = data_point.landmark
-        pos_dict["origin"] = [points[0].x, points[0].y, points[0].z]
-        pos_dict["right_shoulder"] = [points[12].x, points[12].y, points[12].z]
-        pos_dict["left_shoulder"] = [points[11].x, points[11].y, points[11].z]
-        pos_dict["right_elbow"] = [points[14].x, points[14].y, points[14].z]
-        pos_dict["left_elbow"] = [points[13].x, points[13].y, points[13].z]
-        pos_dict["right_hip"] = [points[24].x, points[24].y, points[24].z]
-        pos_dict["left_hip"] = [points[23].x, points[23].y, points[23].z]
-        pos_dict["right_knee"] = [points[26].x, points[26].y, points[26].z]
-        pos_dict["left_knee"] = [points[25].x, points[25].y, points[25].z]
-        pos_dict["right_ankle"] = [points[28].x, points[28].y, points[28].z]
-        pos_dict["left_ankle"] = [points[27].x, points[27].y, points[27].z]
-        pos_dict["right_wrist"] = [points[16].x, points[16].y, points[16].z]
-        pos_dict["left_wrist"] = [points[15].x, points[15].y, points[15].z]
-        
-        end_eff_pos_dict["origin"] = [points[0].x, points[0].y, points[0].z]
-        end_eff_pos_dict["right_ankle"] = [points[28].x, points[28].y, points[28].z]
-        end_eff_pos_dict["left_ankle"] = [points[27].x, points[27].y, points[27].z]
-        end_eff_pos_dict["right_wrist"] = [points[16].x, points[16].y, points[16].z]
-        end_eff_pos_dict["left_wrist"] = [points[15].x, points[15].y, points[15].z]
-
-        angles_dict["right_shoulder"] = compute_angle_3d(14, 12, 24, points)
-        angles_dict["left_shoulder"] = compute_angle_3d(13, 11, 23, points)
-        angles_dict["right_elbow"] = compute_angle_3d(16, 14, 12, points)
-        angles_dict["left_elbow"] = compute_angle_3d(15, 13, 11, points)
-        angles_dict["right_hip"] = compute_angle_3d(12, 24, 26, points)
-        angles_dict["left_hip"] = compute_angle_3d(11, 23, 25, points)
-        angles_dict["right_knee"] = compute_angle_3d(24, 26, 28, points)
-        angles_dict["left_knee"] = compute_angle_3d(23, 25, 27, points)
-        
-        # Find the mean of all points that are values in pos_dict
-        center_of_mass = np.mean([pos for pos in pos_dict.values()], axis=0)
-        cen_mass.append(center_of_mass)
-
-        poses.append(pos_dict)
-        angles.append(angles_dict)
-        end_eff_poses.append(end_eff_pos_dict)
-
-    angle_velocities = []
-    velocities = []
-
-    for i in range (FRAME_DIFF, len(angles) - FRAME_DIFF):
-        angle_velocities_dict = dict()
-        velocities_dict = dict()
-
-        angles_dict = angles[i]
-        pos_dict = poses[i]
-
-        for key in angles_dict.keys():
-            prev_angle = angles[i - 1][key]
-            angle = angles_dict[key]
-            next_angle = angles[i + 1][key]
-            angle_velocities_dict[key] = compute_angular_velocity(prev_angle, angle, next_angle, FRAME_DIFF, FRAMES_PER_SECOND)       
-        angle_velocities.append(angle_velocities_dict)
-
-        for key in pos_dict.keys():
-            prev_pos = poses[i - FRAME_DIFF][key]
-            curr_pos = pos_dict[key]
-            next_pos = poses[i + FRAME_DIFF][key]
-            velocities_dict[key] = compute_velocity(prev_pos, curr_pos, next_pos, FRAME_DIFF, FRAMES_PER_SECOND)       
-        angle_velocities.append(angle_velocities_dict)
-        velocities.append(velocities_dict)
-    
-    poses = poses[FRAME_DIFF:len(poses) - FRAME_DIFF]
-    angles = angles[FRAME_DIFF:len(angles) - FRAME_DIFF]
-    end_eff_poses = end_eff_poses[FRAME_DIFF:len(end_eff_poses) - FRAME_DIFF]
-    
-    return [
-        {
-            'pos': pos, 
-            'angle': angle, 
-            'velocity': velocity, 
-            'angle_velocity': angle_velocity,
-            'center_of_mass': center_of_mass
-        } for pos, angle, velocity, angle_velocity, center_of_mass in zip(end_eff_poses, angles, velocities, angle_velocities, cen_mass)
-    ]
-
 if __name__ == '__main__':
     # Initialize MediaPipe Pose
     mp_pose = mp.solutions.pose
@@ -274,5 +191,5 @@ if __name__ == '__main__':
 
     # Convert the color space from BGR to RGB
     image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    results = compute_pos_angles_from_frame(image_rgb, pose)
+    results = extract_landmarks_from_frame(image_rgb, pose)
     print(results)

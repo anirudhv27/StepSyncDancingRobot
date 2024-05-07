@@ -6,10 +6,8 @@ from pytube import YouTube
 import numpy as np
 import math
 from scipy.spatial.transform import Rotation as R
-from utils.pose_utils import compute_pos_angles
+from pose_utils import compute_velocities_between_poses, extract_landmarks_from_frame
 import matplotlib.pyplot as plt
-FRAMES_PER_SECOND = 30
-FRAME_DIFF = 3
 
 def download_youtube_video(url, path):
     """
@@ -45,17 +43,21 @@ def setup_video_writer(cap, output_filename='output_video.mp4'):
     width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
     return cv2.VideoWriter(output_filename, fourcc, fps, (width, height))
 
-# Process each video frame.
-def process_video(input_video_path, output_video_path):
+
+'''
+Processes video into a list of dictionary landmarks using MediaPipe Pose.
+If landmarks[i] is None, then the frame was not processed successfully.
+
+'''
+def process_video_to_landmarks(input_video_path, FRAME_DIFF, FRAMES_PER_SECOND):
     cap = cv2.VideoCapture(input_video_path)
-    writer = setup_video_writer(cap, output_video_path)
     # Initialize MediaPipe Pose.
     mp_pose = mp.solutions.pose
     pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5, model_complexity=0) # , model_complexity={0,1,2} (fastest to slowest)
 
     landmarks = []
-
     print('Processing video...')
+    
     while cap.isOpened():
         success, frame = cap.read()
         if not success:
@@ -66,43 +68,28 @@ def process_video(input_video_path, output_video_path):
         image.flags.writeable = False
         height, width, channels = image.shape
         
-        # Make detection.
-        results = pose.process(image)
-
-        if (results.pose_landmarks == None):
+        curr_landmarks = extract_landmarks_from_frame(image, pose)
+        if (curr_landmarks is None): # Handling failures by 
+            landmarks.append(None)
             continue
-        landmarks.append(results.pose_landmarks)
         
-        # Draw the pose annotations on the image.
-        keypoints = np.zeros((height, width, channels), dtype="uint8")
+        velocity_landmarks = None
+        if len(landmarks) >= FRAME_DIFF:
+            prev_landmarks = landmarks[-FRAME_DIFF]
+            velocity_landmarks = compute_velocities_between_poses(prev_landmarks, curr_landmarks, FRAME_DIFF, FRAMES_PER_SECOND)
+            
+            # velocity_landmarks is None when prev_landmarks is None
+            # Handle by setting velocity_landmarks to the velocity of the previous frame (best approximation)
+            if velocity_landmarks is not None:
+                curr_landmarks['velocity'] = velocity_landmarks['velocity']
+                curr_landmarks['angle_velocity'] = velocity_landmarks['angle_velocity']
         
-        mp_pose.POSE_CONNECTIONS
-        mp_drawing = mp.solutions.drawing_utils
-        if results.pose_landmarks:
-            mp_drawing.draw_landmarks(keypoints, results.pose_landmarks, mp_pose.POSE_CONNECTIONS)
-
-        # Write the frame with annotations.
-        writer.write(keypoints)
-
-    cap.release()
-    writer.release()
+        landmarks.append(curr_landmarks)
+        
     return landmarks
     
-def gen_dataset_from_url(danceURL, filename='dance'):
+def generate_dataset_from_url(danceURL, filename='dance', FRAME_DIFF=3, FRAMES_PER_SECOND=30):
     input_path = f'../data/{filename}.mp4'
-    output_path = f'../keypoints/{filename}.mp4'
     download_youtube_video(danceURL, input_path)
-    landmarks = process_video(f"../data/{filename}.mp4", output_path)
-    print('printing landmarks from generation')
-    dataset = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND)
+    dataset = process_video_to_landmarks(f"../data/{filename}.mp4", FRAME_DIFF, FRAMES_PER_SECOND)
     return dataset
-
-if __name__ == '__main__':
-    danceURL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
-    filename = 'dance'
-    input_path = f'../../data/{filename}.mp4'
-    output_path = f'../../keypoints/{filename}.mp4'
-    download_youtube_video(danceURL, input_path)
-    # Example usage:
-    landmarks = process_video(input_path, output_path)
-    gen_dataset_from_url("https://www.youtube.com/watch?v=9TWj9I3CKzg")
