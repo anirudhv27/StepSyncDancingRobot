@@ -131,12 +131,15 @@ def compute_velocity(p1, p2, p3, FRAME_DIFF, FRAMES_PER_SECOND):
 
 def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
     poses = []
+    end_eff_poses = []
     angles = []
+    cen_mass = []
 
     # print('landmarks', landmarks)
     # print('length', len(landmarks))
     for data_point in landmarks:
         pos_dict = dict()
+        end_eff_pos_dict = dict()
         angles_dict = dict()
         angle_velocities_dict = dict()
 
@@ -155,6 +158,12 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
         pos_dict["right_wrist"] = [points[16].x, points[16].y, points[16].z]
         pos_dict["left_wrist"] = [points[15].x, points[15].y, points[15].z]
 
+        end_eff_pos_dict["origin"] = [points[0].x, points[0].y, points[0].z]
+        end_eff_pos_dict["right_ankle"] = [points[28].x, points[28].y, points[28].z]
+        end_eff_pos_dict["left_ankle"] = [points[27].x, points[27].y, points[27].z]
+        end_eff_pos_dict["right_wrist"] = [points[16].x, points[16].y, points[16].z]
+        end_eff_pos_dict["left_wrist"] = [points[15].x, points[15].y, points[15].z]
+
         angles_dict["right_shoulder"] = compute_angle_3d(14, 12, 24, points)
         angles_dict["left_shoulder"] = compute_angle_3d(13, 11, 23, points)
         angles_dict["right_elbow"] = compute_angle_3d(16, 14, 12, points)
@@ -164,8 +173,14 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
         angles_dict["right_knee"] = compute_angle_3d(24, 26, 28, points)
         angles_dict["left_knee"] = compute_angle_3d(23, 25, 27, points)
 
+        coords = np.array(pos_dict.values())
+        center_of_mass = np.mean(coords, axis=0)
+
+        cen_mass.append(center_of_mass)
+
         poses.append(pos_dict)
         angles.append(angles_dict)
+        end_eff_poses.append(end_eff_pos_dict)
 
     angle_velocities = []
     velocities = []
@@ -194,12 +209,14 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
     
     poses = poses[FRAME_DIFF:len(poses) - FRAME_DIFF]
     angles = angles[FRAME_DIFF:len(angles) - FRAME_DIFF]
+    end_eff_poses = end_eff_poses[FRAME_DIFF:len(end_eff_poses) - FRAME_DIFF]
     
     return [
         {
             'pos': pos, 
             'angle': angle, 
             'velocity': velocity, 
-            'angle_velocity': angle_velocity
-        } for pos, angle, velocity, angle_velocity in zip(poses, angles, velocities, angle_velocities)
+            'angle_velocity': angle_velocity,
+            'center_of_mass': center_of_mass
+        } for pos, angle, velocity, angle_velocity, center_of_mass in zip(end_eff_poses, angles, velocities, angle_velocities, cen_mass)
     ]

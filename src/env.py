@@ -1,4 +1,11 @@
 import gym
+from collections import UserDict
+import gym.envs.registration
+
+registry = UserDict(gym.envs.registration.registry)
+registry.env_specs = gym.envs.registration.registry
+gym.envs.registration.registry = registry
+
 import pybullet_envs
 from pybullet_envs.deep_mimic.gym_env.deep_mimic_env import HumanoidDeepBulletEnv
 from utils.dataset_gen import gen_dataset_from_url, FRAME_DIFF, FRAMES_PER_SECOND
@@ -186,6 +193,8 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         target_velocity = target_pose['velocity'].values()
         agent_angle_velocity = agent_pose['angle_velocity'].values()
         target_angle_velocity = target_pose['angle_velocity'].values()
+        agent_cenmass = agent_pose['center_of_mass'].values()
+        target_cenmass = target_pose['center_of_mass'].values()
 
         # calculate reward
         reward = 0
@@ -202,6 +211,11 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         velocity_diff = np.exp(-0.1 * velocity_diff)
         weight_velocity = 0.1
         reward += weight_velocity * velocity_diff
+
+        cenmass_diff = np.linalg.norm(np.array(agent_cenmass) - np.array(target_cenmass))
+        cenmass_diff = np.exp(-10 * cenmass_diff)
+        weight_cenmass = 0.1
+        reward += weight_cenmass * cenmass_diff
 
         return reward
 
