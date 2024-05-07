@@ -6,7 +6,7 @@ from pytube import YouTube
 import numpy as np
 import math
 from scipy.spatial.transform import Rotation as R
-from pose_utils import compute_velocities_between_poses, extract_landmarks_from_frame
+from utils.pose_utils import compute_velocities_between_poses, extract_landmarks_from_frame
 import matplotlib.pyplot as plt
 
 def download_youtube_video(url, path):
@@ -70,7 +70,7 @@ def process_video_to_landmarks(input_video_path, FRAME_DIFF, FRAMES_PER_SECOND):
         
         curr_landmarks = extract_landmarks_from_frame(image, pose)
         if (curr_landmarks is None): # Handling failures by 
-            landmarks.append(None)
+            # landmarks.append(None)
             continue
         
         velocity_landmarks = None
