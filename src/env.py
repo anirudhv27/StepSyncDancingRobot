@@ -104,8 +104,16 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             done = True # want to reset environment!
 
         if len(self.frame_history) > FRAME_DIFF:
-            landmarks = [self.landmark_history[i] for i in range(-FRAME_DIFF, 0)]
-            print('computing angles from landmarks')
+            landmarks = []
+            for i in range(-FRAME_DIFF, 0):
+                if self.landmark_history[i] is None:
+                    agent_pos_angles = None
+                    break
+                else:
+                    landmarks.append(self.landmark_history[i])
+                
+            # landmarks = [self.landmark_history[i] for i in range(-FRAME_DIFF, 0)]
+            # print('computing angles from landmarks')
             agent_pos_angles = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND) # what should this be?
         else:
             agent_pos_angles = None

@@ -133,8 +133,8 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
     poses = []
     angles = []
 
-    print('landmarks', landmarks)
-    print('length', len(landmarks))
+    # print('landmarks', landmarks)
+    # print('length', len(landmarks))
     for data_point in landmarks:
         pos_dict = dict()
         angles_dict = dict()
