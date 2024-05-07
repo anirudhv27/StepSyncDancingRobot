@@ -44,9 +44,10 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         else:
             self.target_poses = pickle.load(open(dataset_pkl_path, 'rb'))
         
-        print(len(self.target_poses))
+        print('dataset length', len(self.target_poses))
 
         self.frame_history = []
+        self.landmark_history = []
 
     def render(self, mode='human', close=False):
         if mode == "human":
@@ -96,7 +97,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             action = action * std + mean
 
         # why is reward calculation before the actual step?
-        self.frame_history.append(self.render(mode='human'))
+        self.frame_history.append(self.render(mode='rgb_array'))
         self.landmark_history.append(self.pose.process(self.frame_history[-1]).pose_landmarks)
         if (self.landmark_history[-1] == None):
             done = True # want to reset environment!
@@ -133,8 +134,8 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             state = (state - mean) / (std + 1e-8)
 
         # Record done
-        # done = self._internal_env.is_episode_end()
-        done = done or self._internal_env.is_episode_end()
+        done = self._internal_env.is_episode_end()
+        # done = done or self._internal_env.is_episode_end()
         
         info = {}
         return state, reward, done, info
