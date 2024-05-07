@@ -1,7 +1,8 @@
 import gym
 import pybullet_envs
 from pybullet_envs.deep_mimic.gym_env.deep_mimic_env import HumanoidDeepBulletEnv
-from utils.dataset_gen import gen_dataset_from_url
+from utils.dataset_gen import gen_dataset_from_url, FRAME_DIFF, FRAMES_PER_SECOND
+from utils.pose_utils import compute_pos_angles
 import matplotlib.pyplot as plt
 import mediapipe as mp
 import pickle
@@ -9,7 +10,8 @@ import pickle
 import numpy as np
 
 class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
-    metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
+    # metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
+    metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': FRAMES_PER_SECOND}
         
     def __init__(self, renders=False, arg_file='', test_mode=False,
                  time_step=1./240, rescale_actions=True, rescale_observations=True,
@@ -37,6 +39,8 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             # pickle.dump(self.target_poses, open(dataset_pkl_path, 'wb'))
         else:
             self.target_poses = pickle.load(open(dataset_pkl_path, 'rb'))
+
+        self.frame_history = []
 
     def render(self, mode='human', close=False):
         if mode == "human":
@@ -85,6 +89,20 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             std = 1./self._action_scale
             action = action * std + mean
 
+        # why is reward calculation before the actual step?
+        self.frame_history.append(self.render(mode='human'))
+
+        if len(self.frame_history) > FRAME_DIFF:
+            landmarks = []
+
+            for i in range(-FRAME_DIFF, 0):
+                frame_landmark = self.pose.process(self.frame_history[i])
+                if (frame_landmark.pose_landmarks == None):
+                    done = True # want to reset environment!
+                landmarks.append(frame_landmark.pose_landmarks)
+
+            agent_pos_angles = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND) # what should this be?
+
         # Record reward
         reward = self.calc_reward(agent_id)
 
@@ -111,10 +129,12 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             state = (state - mean) / (std + 1e-8)
 
         # Record done
-        done = self._internal_env.is_episode_end()
+        # done = self._internal_env.is_episode_end()
+        done = done or self._internal_env.is_episode_end()
         
         info = {}
         return state, reward, done, info
+        
     
     def calc_reward(self, agent_id):
         # raise NotImplementedError
