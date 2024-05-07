@@ -51,7 +51,7 @@ def compute_angle_3d(a_ind, b_ind, c_ind, points):
     
     return quaternion_difference.as_quat()
 
-def compute_angular_velocity_2(q1, q2, FRAME_DIFF, FRAMES_PER_SECOND):
+def compute_angular_velocity(q1, q2, FRAME_DIFF, FRAMES_PER_SECOND):
     """
     Compute the angular velocity between two quaternions.
     
@@ -79,29 +79,7 @@ def compute_angular_velocity_2(q1, q2, FRAME_DIFF, FRAMES_PER_SECOND):
     
     return angular_velocity
 
-def compute_angular_velocity(q1, q2, q3, FRAME_DIFF, FRAMES_PER_SECOND):
-    """
-    Compute the angular velocity at q2.
-    
-    Args:
-    q1 (np.array): The quaternion before q2.
-    q2 (np.array): The quaternion at which to compute the angular velocity.
-    q3 (np.array): The quaternion after q2.
-    
-    Returns:
-    float: The angular velocity at q2 in radians per second.
-    """
-    
-    # Compute the angular velocities
-    angular_velocity_12 = compute_angular_velocity_2(q1, q2, FRAME_DIFF, FRAMES_PER_SECOND)
-    angular_velocity_23 = compute_angular_velocity_2(q2, q3, FRAME_DIFF, FRAMES_PER_SECOND)
-    
-    # Compute the average angular velocity
-    angular_velocity = (angular_velocity_12 + angular_velocity_23) / 2
-    
-    return angular_velocity
-
-def compute_velocity(p1, p2, p3, FRAME_DIFF, FRAMES_PER_SECOND):
+def compute_velocity(p1, p2, FRAME_DIFF, FRAMES_PER_SECOND):
     """
     Compute the velocity at p2.
     
@@ -113,20 +91,13 @@ def compute_velocity(p1, p2, p3, FRAME_DIFF, FRAMES_PER_SECOND):
     Returns:
     float: The velocity at p2 in meters per second.
     """
-    
     dt = float(FRAME_DIFF)/FRAMES_PER_SECOND
 
     p1 = np.array(p1)
     p2 = np.array(p2)
-    p3 = np.array(p3)
    
     # Compute the velocities
-    velocity_12 = (p2 - p1) / dt
-    velocity_23 = (p3 - p2) / dt
-    
-    # Compute the average velocity
-    velocity = (velocity_12 + velocity_23) / 2
-    
+    velocity = (p2 - p1) / dt
     return velocity
 
 '''
@@ -178,13 +149,11 @@ def compute_pos_angles_from_frame(frame, mediapipe_pose):
         'center_of_mass': center_of_mass
     }
 
-def compute_velocities_between_poses(prev_pos, curr_pos, next_pos, FRAME_DIFF, FRAMES_PER_SECOND):
+def compute_velocities_between_poses(prev_pos, curr_pos, FRAME_DIFF, FRAMES_PER_SECOND):
     prev_pos_dict = prev_pos['pos']
     prev_angles_dict = prev_pos['angle']
     curr_pos_dict = curr_pos['pos']
     curr_angles_dict = curr_pos['angle']
-    next_pos_dict = next_pos['pos']
-    next_angles_dict = next_pos['angle']
     
     velocities_dict = dict()
     angle_velocities_dict = dict()
@@ -192,14 +161,12 @@ def compute_velocities_between_poses(prev_pos, curr_pos, next_pos, FRAME_DIFF, F
     for key in prev_pos_dict.keys():
         prev_pos = prev_pos_dict[key]
         curr_pos = curr_pos_dict[key]
-        next_pos = next_pos_dict[key]
-        velocities_dict[key] = compute_velocity(prev_pos, curr_pos, next_pos, FRAME_DIFF, FRAMES_PER_SECOND)
+        velocities_dict[key] = compute_velocity(prev_pos, curr_pos, FRAME_DIFF, FRAMES_PER_SECOND)
     
     for key in prev_angles_dict.keys():
         prev_angles = prev_angles_dict[key]
         curr_angles = curr_angles_dict[key]
-        next_angles = next_angles_dict[key]
-        angle_velocities_dict[key] = compute_velocity(prev_angles, curr_angles, next_angles, FRAME_DIFF, FRAMES_PER_SECOND)
+        angle_velocities_dict[key] = compute_angular_velocity(prev_angles, curr_angles, FRAME_DIFF, FRAMES_PER_SECOND)
     
     return {
         'velocity': velocities_dict,
@@ -207,8 +174,6 @@ def compute_velocities_between_poses(prev_pos, curr_pos, next_pos, FRAME_DIFF, F
     }
 
 def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
-    
-    
     
     poses = []
     end_eff_poses = []
