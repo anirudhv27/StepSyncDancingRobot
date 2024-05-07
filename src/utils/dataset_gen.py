@@ -98,7 +98,7 @@ def gen_dataset_from_url(danceURL, filename='dance'):
     dataset = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND)
     return dataset
 
-gen_dataset_from_url("https://www.youtube.com/watch?v=9TWj9I3CKzg&pp=ygUaYmF0YW1peCBkaWwgZGFuY2UgdHV0b3JpYWw%3D")
+gen_dataset_from_url("https://www.youtube.com/watch?v=9TWj9I3CKzg")
 if __name__ == '__main__':
     danceURL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
     filename = 'dance'
