@@ -97,20 +97,18 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
 
         # why is reward calculation before the actual step?
         self.frame_history.append(self.render(mode='human'))
+        self.landmark_history.append(self.pose.process(self.frame_history[-1]).pose_landmarks)
+        if (self.landmark_history[-1] == None):
+            done = True # want to reset environment!
 
         if len(self.frame_history) > FRAME_DIFF:
-            landmarks = []
-
-            for i in range(-FRAME_DIFF, 0):
-                frame_landmark = self.pose.process(self.frame_history[i])
-                if (frame_landmark.pose_landmarks == None):
-                    done = True # want to reset environment!
-                landmarks.append(frame_landmark.pose_landmarks)
-
+            landmarks = [self.landmark_history[i] for i in range(-FRAME_DIFF, 0)]
             agent_pos_angles = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND) # what should this be?
+        else:
+            agent_pos_angles = None
 
         # Record reward
-        reward = self.calc_reward(agent_id)
+        reward = self.calc_reward(agent_id, agent_pos_angles)
 
         # Apply control action
         self._internal_env.set_action(agent_id, action)
@@ -157,11 +155,14 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             quat_diff += magnitude
         return quat_diff
     
-    def calc_reward(self, agent_id):
+    def calc_reward(self, agent_id, agent_pose):
         # get image of the current position
         img = self.render('rgb_array')
         # get pose of the current position
-        agent_pose = get_pose(img)
+        if agent_pose is None:
+            return 0
+        
+        agent_pose = agent_pose[-1]
         # get target pose
         target_pose = self.target_poses[self._numSteps]
 
