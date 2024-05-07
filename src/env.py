@@ -44,7 +44,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         else:
             self.target_poses = pickle.load(open(dataset_pkl_path, 'rb'))
         
-        print('dataset length', len(self.target_poses))
+        print('dataset length: ', len(self.target_poses))
 
         self.frame_history = []
         self.landmark_history = []
@@ -89,6 +89,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
     
     def step(self, action):
         agent_id = self.agent_id
+        done = False
 
         if self._rescale_actions:
             # Rescale the action
@@ -104,6 +105,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
 
         if len(self.frame_history) > FRAME_DIFF:
             landmarks = [self.landmark_history[i] for i in range(-FRAME_DIFF, 0)]
+            print('computing angles from landmarks')
             agent_pos_angles = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND) # what should this be?
         else:
             agent_pos_angles = None
@@ -134,8 +136,8 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             state = (state - mean) / (std + 1e-8)
 
         # Record done
-        done = self._internal_env.is_episode_end()
-        # done = done or self._internal_env.is_episode_end()
+        # done = self._internal_env.is_episode_end()
+        done = done or self._internal_env.is_episode_end()
         
         info = {}
         return state, reward, done, info
@@ -160,9 +162,10 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         # get image of the current position
         img = self.render('rgb_array')
         # get pose of the current position
-        if agent_pose is None:
+        if agent_pose is None or len(agent_pose) == 0:
             return 0
         
+        print('agent pose', agent_pose)
         agent_pose = agent_pose[-1]
         # get target pose
         target_pose = self.target_poses[self._numSteps]

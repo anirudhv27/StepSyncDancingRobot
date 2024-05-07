@@ -93,6 +93,7 @@ def gen_dataset_from_url(danceURL, filename='dance'):
     output_path = f'../keypoints/{filename}.mp4'
     download_youtube_video(danceURL, input_path)
     landmarks = process_video(f"../data/{filename}.mp4", output_path)
+    print('printing landmarks from generation')
     dataset = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND)
     return dataset
 
