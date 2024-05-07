@@ -6,7 +6,7 @@ from pytube import YouTube
 import numpy as np
 import math
 from scipy.spatial.transform import Rotation as R
-from .compute_pos_angles import compute_pos_angles
+from compute_pos_angles import compute_pos_angles
 import matplotlib.pyplot as plt
 FRAMES_PER_SECOND = 30
 FRAME_DIFF = 3
@@ -93,10 +93,12 @@ def gen_dataset_from_url(danceURL, filename='dance'):
     output_path = f'../keypoints/{filename}.mp4'
     download_youtube_video(danceURL, input_path)
     landmarks = process_video(f"../data/{filename}.mp4", output_path)
+    print ("Gen dataset")
+    print (landmarks)
     dataset = compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND)
-    
     return dataset
 
+gen_dataset_from_url("https://www.youtube.com/watch?v=9TWj9I3CKzg&pp=ygUaYmF0YW1peCBkaWwgZGFuY2UgdHV0b3JpYWw%3D")
 if __name__ == '__main__':
     danceURL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
     filename = 'dance'

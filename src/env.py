@@ -8,6 +8,7 @@ import mediapipe as mp
 import pickle
 
 import numpy as np
+from scipy.spatial.transform import Rotation as R
 
 class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
     # metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
@@ -32,13 +33,18 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         self.pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5, model_complexity=0) # , model_complexity={0,1,2} (fastest to slowest)    
         
         # If dataset_pkl is none, download video from URL
+        if dataset_pkl_path is None:
+            raise ValueError('dataset_pkl_path cannot be None')
+        
         filename = 'bollywood_dance_test'
         if video_URL is not None:
             print('Downloading video...')
             self.target_poses = gen_dataset_from_url(video_URL, filename)
-            # pickle.dump(self.target_poses, open(dataset_pkl_path, 'wb'))
+            pickle.dump(self.target_poses, open(dataset_pkl_path, 'wb'))
         else:
             self.target_poses = pickle.load(open(dataset_pkl_path, 'rb'))
+        
+        print(len(self.target_poses))
 
         self.frame_history = []
 
@@ -136,6 +142,58 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         return state, reward, done, info
         
     
+    def quat_diff_sum(self, quat1, quat2):
+        quat_diff = 0
+        for i in range (quat1.shape[0]):
+            # Convert the quaternions to rotation objects
+            r1 = R.from_quat(quat1)
+            r2 = R.from_quat(quat2)
+            # Calculate the difference between the quaternions
+            diff = (r1.inv() * r2).as_quat()
+
+            # Calculate the magnitude of the difference
+            magnitude = np.linalg.norm(diff, axis=1)
+
+            quat_diff += magnitude
+        return quat_diff
+    
     def calc_reward(self, agent_id):
-        # raise NotImplementedError
-        return self._internal_env.calc_reward(agent_id)
+        # get image of the current position
+        img = self.render('rgb_array')
+        # get pose of the current position
+        agent_pose = get_pose(img)
+        # get target pose
+        target_pose = self.target_poses[self._numSteps]
+
+        agent_pos = agent_pose['pos'].values()
+        target_pos = target_pose['pos'].values()
+        agent_angle = np.array(agent_pose['angle'].values())
+        target_angle = np.array(target_pose['angle'].values())
+        agent_velocity = agent_pose['velocity'].values()
+        target_velocity = target_pose['velocity'].values()
+        agent_angle_velocity = agent_pose['angle_velocity'].values()
+        target_angle_velocity = target_pose['angle_velocity'].values()
+
+        # calculate reward
+        reward = 0
+        angle_quat_diff = np.exp(-2 * self.quat_diff_sum(agent_angle, target_angle))
+        weight_angle = 0.65
+        reward += weight_angle * angle_quat_diff
+
+        pos_diff = np.linalg.norm(np.array(agent_pos) - np.array(target_pos))
+        pos_diff = np.exp(-40 * pos_diff)
+        weight_pos = 0.15
+        reward += weight_pos * pos_diff
+
+        velocity_diff = np.linalg.norm(np.array(agent_angle_velocity) - np.array(target_angle_velocity))
+        velocity_diff = np.exp(-0.1 * velocity_diff)
+        weight_velocity = 0.1
+        reward += weight_velocity * velocity_diff
+
+        return reward
+
+
+
+
+
+

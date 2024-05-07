@@ -130,8 +130,10 @@ def compute_velocity(p1, p2, p3, FRAME_DIFF, FRAMES_PER_SECOND):
     return velocity
 
 def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
-    pos = []
+    poses = []
     angles = []
+    print ("Landmarks:")
+    print (landmarks)
 
     for data_point in landmarks:
         pos_dict = dict()
@@ -162,7 +164,7 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
         angles_dict["right_knee"] = compute_angle_3d(24, 26, 28, points)
         angles_dict["left_knee"] = compute_angle_3d(23, 25, 27, points)
 
-        pos.append(pos_dict)
+        poses.append(pos_dict)
         angles.append(angles_dict)
 
     angle_velocities = []
@@ -173,7 +175,7 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
         velocities_dict = dict()
 
         angles_dict = angles[i]
-        pos_dict = pos[i]
+        pos_dict = poses[i]
 
         for key in angles_dict.keys():
             prev_angle = angles[i - 1][key]
@@ -183,20 +185,25 @@ def compute_pos_angles(landmarks, FRAME_DIFF, FRAMES_PER_SECOND):
         angle_velocities.append(angle_velocities_dict)
 
         for key in pos_dict.keys():
-            prev_pos = pos[i - FRAME_DIFF][key]
+            prev_pos = poses[i - FRAME_DIFF][key]
             curr_pos = pos_dict[key]
-            next_pos = pos[i + FRAME_DIFF][key]
+            next_pos = poses[i + FRAME_DIFF][key]
             velocities_dict[key] = compute_velocity(prev_pos, curr_pos, next_pos, FRAME_DIFF, FRAMES_PER_SECOND)       
         angle_velocities.append(angle_velocities_dict)
         velocities.append(velocities_dict)
     
-    pos = pos[FRAME_DIFF:len(pos) - FRAME_DIFF]
+    print (poses)
+    poses = poses[FRAME_DIFF:len(poses) - FRAME_DIFF]
     angles = angles[FRAME_DIFF:len(angles) - FRAME_DIFF]
 
-    return {
-        'pos': pos, 
-        'angles': angles, 
-        'velocities': velocities, 
-        'angle_velocities': angle_velocities
-    }
-
+    print (angles[0])
+    print (angles[0].values())
+    
+    return [
+        {
+            'pos': pos, 
+            'angle': angle, 
+            'velocity': velocity, 
+            'angle_velocity': angle_velocity
+        } for pos, angle, velocity, angle_velocity in zip(poses, angles, velocities, angle_velocities)
+    ]
