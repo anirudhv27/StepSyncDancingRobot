@@ -172,7 +172,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             if self._numSteps > 0:
                 avg_reward = self.reward_sum / self._numSteps
                 #print (self.reward_sum, self._numSteps, avg_reward)
-                name = "tuning/rewards/"
+                name = "tuning/rewards/ppo"
                 name += str(self.batch_size)
                 name += "_" + str(self.learning_rate)
                 name += "_" + str(self.gamma)
@@ -186,7 +186,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
                 rewards = np.append(rewards, avg_reward)
                 np.save(name, rewards)
 
-                name_timesteps = "tuning/timesteps/"
+                name_timesteps = "tuning/timesteps/ppo"
                 name_timesteps += str(self.batch_size)
                 name_timesteps += "_" + str(self.learning_rate)
                 name_timesteps += "_" + str(self.gamma)
@@ -252,7 +252,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
                 #print ("logged")
                 avg_reward = self.reward_sum / (self._numSteps)
                 #print (self.reward_sum, self._numSteps, avg_reward)
-                name = "tuning/rewards/"
+                name = "tuning/rewards/ppo"
                 name += str(self.batch_size)
                 name += "_" + str(self.learning_rate)
                 name += "_" + str(self.gamma)
@@ -266,7 +266,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
                 rewards = np.append(rewards, avg_reward)
                 np.save(name, rewards)
 
-                name_timesteps = "tuning/timesteps/"
+                name_timesteps = "tuning/timesteps/ppo"
                 name_timesteps += str(self.batch_size)
                 name_timesteps += "_" + str(self.learning_rate)
                 name_timesteps += "_" + str(self.gamma)
