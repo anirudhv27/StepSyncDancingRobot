@@ -3,24 +3,30 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-for batch_size in [32]:
-    for learning_rate in [0.0001]:
-        for gamma in [0.99, 0.95, 0.9]:
-            for gae_lambda in [0.95, 0.9, 0.8]:
-                reward_name = "reward_" + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + "_" + str(gae_lambda) + ".npy"
-                rewards = np.load(reward_name)
-                #rewards = np.load("reward_32_0.0001_0.99_0.95.npy")
+def plot_rewards(batch_size, learning_rate, gamma, gae_lambda):
+    reward_name = "tuning/rewards/ppo" + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + "_" + str(gae_lambda) + ".npy"
+    rewards = np.load(reward_name)
+    timesteps_name = "tuning/timesteps/ppo" + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + "_" + str(gae_lambda) + ".npy"
+    timesteps = np.load(timesteps_name)
 
-                plt.plot(rewards)
+    plt.figure()
+    plt.plot(rewards)
 
-                # Add title and labels
-                plt.title('Rewards over time')
-                plt.xlabel('Time step')
-                plt.ylabel('Reward')
+    # Add title and labels
+    plt.title('Rewards over episodes')
+    plt.xlabel('Episode')
+    plt.ylabel('Reward')
 
-                # Save the plot as a PNG file
-                save_name = "rewards_plot_" + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + "_" + str(gae_lambda) + ".png"
-                plt.savefig(save_name)
+    # Save the plot as a PNG file
+    save_name = "tuning/reward_plot/ppo" + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + "_" + str(gae_lambda) + ".png"
+    plt.savefig(save_name)
 
-                # Display the plot
-                plt.show()
+    # reset the plot
+    plt.figure()
+
+    plt.plot(timesteps)
+    plt.title('Timesteps Lasted over episodes')
+    plt.xlabel('Episode')
+    plt.ylabel('Timesteps')
+    save_name = "tuning/timesteps_plot/ppo" + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + "_" + str(gae_lambda) + ".png"
+    plt.savefig(save_name)
