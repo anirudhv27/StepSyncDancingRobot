@@ -115,12 +115,8 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         
         # Compute the current pose landmark of the agent
         # Store a history of previous landmarks
-<<<<<<< Updated upstream
-        obs_image = self.render(mode='rgb_array').astype(np.uint8)
-=======
         obs_image = self.render(mode='rgb_array').astype('uint8')
 
->>>>>>> Stashed changes
         curr_landmarks = extract_landmarks_from_frame(obs_image, self.pose)
         if curr_landmarks is None:         # if not valid, reset the environment
             print('want to reset')
@@ -152,11 +148,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
 
         # Record reward
         reward = self.calc_reward(agent_id, curr_landmarks)
-<<<<<<< Updated upstream
-        print('reward', reward)
-=======
         self.reward_sum += reward
->>>>>>> Stashed changes
 
         # Apply control action
         self._internal_env.set_action(agent_id, action)
