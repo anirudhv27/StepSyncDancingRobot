@@ -11,21 +11,42 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_checker import check_env
 
 TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
+
+for batch_size in [32, 64, 128]:
+    for learning_rate in [0.0001, 0.0005, 0.001]:
+        for gamma in [0.95]:
+            for gae_lambda in [0.8]:
+                env = CustomHumanoidDeepBulletEnv(renders=False, 
+                                  arg_file='run_humanoid3d_dance_b_args.txt', 
+                                  custom_cam_dist=2.2, 
+                                  custom_cam_pitch=0, 
+                                  custom_cam_yaw=90, 
+                                  #video_URL=TARGET_VIDEO_URL,
+                                  dataset_pkl_path='bollywood_dance_test.pkl',
+                                  batch_size=batch_size,
+                                  learning_rate=learning_rate,
+                                  gamma=gamma,
+                                  gae_lambda=gae_lambda)
+                model = PPO("MlpPolicy", env, verbose=1, n_steps=10000, batch_size=batch_size, learning_rate=learning_rate, gamma=gamma, gae_lambda=gae_lambda)
+                model.learn(total_timesteps=10000, progress_bar=True)
+                model.save("ppo_humanoid_deep_bullet" + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + "_" + str(gae_lambda))
+
+'''
 env = CustomHumanoidDeepBulletEnv(renders=True, 
                                   arg_file='run_humanoid3d_dance_b_args.txt', 
                                   custom_cam_dist=2.2, 
                                   custom_cam_pitch=0, 
                                   custom_cam_yaw=90, 
-                                  # video_URL=TARGET_VIDEO_URL,
+                                  #video_URL=TARGET_VIDEO_URL,
                                   dataset_pkl_path='bollywood_dance_test.pkl')
 
 print('initialized env')
 
 # Instantiate the agent
-model = PPO("MlpPolicy", env, verbose=1)
+model = PPO("MlpPolicy", env, verbose=1, n_steps = 10)
 
 # Train the agent
-model.learn(total_timesteps=10000)
+model.learn(total_timesteps=10000, progress_bar=True)
 
 # Save the model
 model.save("ppo_humanoid_deep_bullet")
@@ -42,4 +63,4 @@ for i in range(1000):
     if done:
       obs = env.reset()
 
-env.close()
+env.close()'''

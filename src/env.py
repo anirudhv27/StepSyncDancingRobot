@@ -24,16 +24,21 @@ FRAMES_PER_SECOND = 30
 class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
     # metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
     metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': FRAMES_PER_SECOND}
-        
+    
     def __init__(self, renders=False, arg_file='', test_mode=False,
                  time_step=1./240, rescale_actions=True, rescale_observations=True,
                  custom_cam_dist=4, custom_cam_pitch=0.1, custom_cam_yaw=45,
-                 video_URL=None, dataset_pkl_path=None):
+                 video_URL=None, dataset_pkl_path=None, batch_size=32, learning_rate=0.003, gamma=0.99, gae_lambda=0.95):
         
         super().__init__(renders=renders, arg_file=arg_file, test_mode=test_mode,
                          time_step=time_step, rescale_actions=rescale_actions, 
                          rescale_observations=rescale_observations)
         
+        self.batch_size = batch_size
+        self.learning_rate = learning_rate
+        self.gamma = gamma
+        self.gae_lambda = gae_lambda
+
         self._cam_dist = custom_cam_dist
         self._cam_pitch = custom_cam_pitch
         self._cam_yaw = custom_cam_yaw
@@ -57,6 +62,8 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         
         print('dataset length: ', len(self.target_poses))
         self.landmark_history = []
+
+        self.reward_sum = 0
 
     def render(self, mode='human', close=False):
         if mode == "human":
@@ -108,11 +115,31 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         
         # Compute the current pose landmark of the agent
         # Store a history of previous landmarks
+<<<<<<< Updated upstream
         obs_image = self.render(mode='rgb_array').astype(np.uint8)
+=======
+        obs_image = self.render(mode='rgb_array').astype('uint8')
+
+>>>>>>> Stashed changes
         curr_landmarks = extract_landmarks_from_frame(obs_image, self.pose)
         if curr_landmarks is None:         # if not valid, reset the environment
             print('want to reset')
             done = True
+            if self._numSteps > 0:
+                avg_reward = self.reward_sum / self._numSteps
+                name = "reward"
+                name += "_" + str(self.batch_size)
+                name += "_" + str(self.learning_rate)
+                name += "_" + str(self.gamma)
+                name += "_" + str(self.gae_lambda)
+                name += ".npy"
+                try:
+                    rewards = np.load(name)
+                except FileNotFoundError:
+                    rewards = np.array([])
+
+                rewards = np.append(rewards, avg_reward)
+                np.save(name, rewards)
         else:
             if len(self.landmark_history) >= FRAME_DIFF:
                 prev_landmarks = self.landmark_history[-FRAME_DIFF]
@@ -125,7 +152,11 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
 
         # Record reward
         reward = self.calc_reward(agent_id, curr_landmarks)
+<<<<<<< Updated upstream
         print('reward', reward)
+=======
+        self.reward_sum += reward
+>>>>>>> Stashed changes
 
         # Apply control action
         self._internal_env.set_action(agent_id, action)
@@ -154,6 +185,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         done = done or self._internal_env.is_episode_end()
         print('done1', done)
         info = {}
+        print (reward)
         return state, reward, done, info
         
     
