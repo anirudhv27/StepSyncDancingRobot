@@ -3,13 +3,16 @@ import mediapipe as mp
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from pytube import YouTube
+from moviepy.video.io.VideoFileClip import VideoFileClip
+from moviepy.video.fx.all import crop
+import os
 import numpy as np
 import math
 from scipy.spatial.transform import Rotation as R
 from utils.pose_utils import compute_velocities_between_poses, extract_landmarks_from_frame
 import matplotlib.pyplot as plt
 
-def download_youtube_video(url, path):
+def download_youtube_video(url, filename):
     """
     Downloads a YouTube video from the given URL and saves it as an MP4 file.
     
@@ -26,11 +29,35 @@ def download_youtube_video(url, path):
         
         # Select the highest resolution stream available
         stream = yt.streams.filter(file_extension='mp4').get_highest_resolution()
-        
+
+        final_path = f'../data/{filename}.mp4'
+        temp_path = f'../data/temp.mp4'
+
         # Download the video
-        stream.download(filename=path)
+        stream.download(filename=temp_path)
         
-        print(f"Video downloaded successfully: {path}")
+        # Load the downloaded video clip
+        clip = VideoFileClip(temp_path)
+        print("OG Clip", clip.size, clip.duration)
+        
+        # Remove the first 30 seconds
+        trimmed_clip = clip.subclip(30)
+        print("Trimmed Clip", trimmed_clip.size, trimmed_clip.duration)
+
+        # Get the dimensions of the video
+        width, height = trimmed_clip.size
+
+        x_center, y_center = width//2, height//2
+        
+        # Perform the center square crop
+        cropped_clip = crop(trimmed_clip, x_center=x_center, y_center=y_center, width=width//3, height=height)
+        print("Cropped Clip", cropped_clip.size, cropped_clip.duration)
+
+        # Write the cropped clip to a file
+        os.remove(final_path)
+        cropped_clip.write_videofile(final_path)
+        
+        print(f"Video downloaded successfully: {final_path}")
         return True
     except Exception as e:
         print(f"Failed to download video: {str(e)}")
@@ -89,7 +116,6 @@ def process_video_to_landmarks(input_video_path, FRAME_DIFF, FRAMES_PER_SECOND):
     return landmarks
     
 def generate_dataset_from_url(danceURL, filename='dance', FRAME_DIFF=3, FRAMES_PER_SECOND=30):
-    input_path = f'../data/{filename}.mp4'
-    download_youtube_video(danceURL, input_path)
+    download_youtube_video(danceURL, filename)
     dataset = process_video_to_landmarks(f"../data/{filename}.mp4", FRAME_DIFF, FRAMES_PER_SECOND)
     return dataset

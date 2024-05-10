@@ -10,7 +10,8 @@ from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_checker import check_env
 
-TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
+# TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
+TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=PRdxgTgHAqA'
 
 for batch_size in [32, 64, 128]:
     for learning_rate in [0.0001, 0.0005, 0.001]:
@@ -21,8 +22,11 @@ for batch_size in [32, 64, 128]:
                                   custom_cam_dist=2.2, 
                                   custom_cam_pitch=0, 
                                   custom_cam_yaw=90, 
-                                  #video_URL=TARGET_VIDEO_URL,
-                                  dataset_pkl_path='bollywood_dance_test.pkl',
+                                  video_URL=TARGET_VIDEO_URL,
+                                #   dataset_pkl_path='bollywood_dance_test.pkl',
+                                  dataset_pkl_path='fortnite_floss.pkl',
+                                  filename='fortnite_floss',
+                                  # filename = 'bollywood_dance_test'
                                   batch_size=batch_size,
                                   learning_rate=learning_rate,
                                   gamma=gamma,

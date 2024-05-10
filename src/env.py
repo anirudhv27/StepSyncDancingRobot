@@ -28,7 +28,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
     def __init__(self, renders=False, arg_file='', test_mode=False,
                  time_step=1./240, rescale_actions=True, rescale_observations=True,
                  custom_cam_dist=4, custom_cam_pitch=0.1, custom_cam_yaw=45,
-                 video_URL=None, dataset_pkl_path=None, batch_size=32, learning_rate=0.003, gamma=0.99, gae_lambda=0.95):
+                 video_URL=None, dataset_pkl_path=None, filename='fortnite_floss', batch_size=32, learning_rate=0.003, gamma=0.99, gae_lambda=0.95):
         
         super().__init__(renders=renders, arg_file=arg_file, test_mode=test_mode,
                          time_step=time_step, rescale_actions=rescale_actions, 
@@ -52,7 +52,6 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         if dataset_pkl_path is None:
             raise ValueError('dataset_pkl_path cannot be None')
         
-        filename = 'bollywood_dance_test'
         if video_URL is not None:
             print('Downloading video...')
             self.target_poses = generate_dataset_from_url(video_URL, filename)
