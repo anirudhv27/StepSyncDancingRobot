@@ -17,6 +17,7 @@ import pickle
 
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+from plot_rewards import plot_rewards
 
 FRAME_DIFF = 3
 FRAMES_PER_SECOND = 30
@@ -30,9 +31,12 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
                  custom_cam_dist=4, custom_cam_pitch=0.1, custom_cam_yaw=45,
                  video_URL=None, dataset_pkl_path=None, batch_size=32, learning_rate=0.003, gamma=0.99, gae_lambda=0.95):
         
+        self._numSteps = 0
+        
         super().__init__(renders=renders, arg_file=arg_file, test_mode=test_mode,
                          time_step=time_step, rescale_actions=rescale_actions, 
                          rescale_observations=rescale_observations)
+        
         
         self.batch_size = batch_size
         self.learning_rate = learning_rate
@@ -51,7 +55,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         # If dataset_pkl is none, download video from URL
         if dataset_pkl_path is None:
             raise ValueError('dataset_pkl_path cannot be None')
-        
+                
         filename = 'bollywood_dance_test'
         if video_URL is not None:
             print('Downloading video...')
@@ -103,6 +107,50 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         rgb_array = rgb_array[:, :, :3]
         return rgb_array
     
+    '''
+    def reset(self):
+        print ("Num steps reset")
+        print (self._numSteps)
+        if self._numSteps is None:
+            self._numSteps = 0
+        if self._numSteps > 0:
+            avg_reward = self.reward_sum / self._numSteps
+            print (self.reward_sum, self._numSteps, avg_reward)
+            name = "tuning/rewards/"
+            name += str(self.batch_size)
+            name += "_" + str(self.learning_rate)
+            name += "_" + str(self.gamma)
+            name += "_" + str(self.gae_lambda)
+            name += ".npy"
+            try:
+                rewards = np.load(name)
+            except FileNotFoundError:
+                rewards = np.array([])
+
+            rewards = np.append(rewards, avg_reward)
+            np.save(name, rewards)
+
+            name_timesteps = "tuning/timesteps/"
+            name_timesteps += str(self.batch_size)
+            name_timesteps += "_" + str(self.learning_rate)
+            name_timesteps += "_" + str(self.gamma)
+            name_timesteps += "_" + str(self.gae_lambda)
+            name_timesteps += ".npy"
+            try:
+                timesteps = np.load(name_timesteps)
+            except FileNotFoundError:
+                timesteps = np.array([])
+            timesteps = np.append(timesteps, self._numSteps)
+            np.save(name_timesteps, timesteps)
+
+            plot_rewards(self.batch_size, self.learning_rate, self.gamma, self.gae_lambda)
+            self.landmark_history = []
+
+            self.reward_sum = 0
+
+        super().reset()
+        '''
+    
     def step(self, action):
         agent_id = self.agent_id
         done = False
@@ -123,8 +171,9 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             done = True
             if self._numSteps > 0:
                 avg_reward = self.reward_sum / self._numSteps
-                name = "reward"
-                name += "_" + str(self.batch_size)
+                #print (self.reward_sum, self._numSteps, avg_reward)
+                name = "tuning/rewards/"
+                name += str(self.batch_size)
                 name += "_" + str(self.learning_rate)
                 name += "_" + str(self.gamma)
                 name += "_" + str(self.gae_lambda)
@@ -136,6 +185,24 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
 
                 rewards = np.append(rewards, avg_reward)
                 np.save(name, rewards)
+
+                name_timesteps = "tuning/timesteps/"
+                name_timesteps += str(self.batch_size)
+                name_timesteps += "_" + str(self.learning_rate)
+                name_timesteps += "_" + str(self.gamma)
+                name_timesteps += "_" + str(self.gae_lambda)
+                name_timesteps += ".npy"
+                try:
+                    timesteps = np.load(name_timesteps)
+                except FileNotFoundError:
+                    timesteps = np.array([])
+                timesteps = np.append(timesteps, self._numSteps)
+                np.save(name_timesteps, timesteps)
+
+                plot_rewards(self.batch_size, self.learning_rate, self.gamma, self.gae_lambda)
+                self.reward_sum = 0
+                self.landmark_history = []
+
         else:
             if len(self.landmark_history) >= FRAME_DIFF:
                 prev_landmarks = self.landmark_history[-FRAME_DIFF]
@@ -175,9 +242,47 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         # Record done
         # done = self._internal_env.is_episode_end()
         done = done or self._internal_env.is_episode_end()
-        print('done1', done)
+        #print('done1', done)
         info = {}
-        print (reward)
+        print (reward, self._numSteps, self.reward_sum)
+
+        if self._internal_env.is_episode_end():
+            print ("Reset", self._numSteps)
+            if self._numSteps > 0:
+                #print ("logged")
+                avg_reward = self.reward_sum / (self._numSteps)
+                #print (self.reward_sum, self._numSteps, avg_reward)
+                name = "tuning/rewards/"
+                name += str(self.batch_size)
+                name += "_" + str(self.learning_rate)
+                name += "_" + str(self.gamma)
+                name += "_" + str(self.gae_lambda)
+                name += ".npy"
+                try:
+                    rewards = np.load(name)
+                except FileNotFoundError:
+                    rewards = np.array([])
+
+                rewards = np.append(rewards, avg_reward)
+                np.save(name, rewards)
+
+                name_timesteps = "tuning/timesteps/"
+                name_timesteps += str(self.batch_size)
+                name_timesteps += "_" + str(self.learning_rate)
+                name_timesteps += "_" + str(self.gamma)
+                name_timesteps += "_" + str(self.gae_lambda)
+                name_timesteps += ".npy"
+                try:
+                    timesteps = np.load(name_timesteps)
+                except FileNotFoundError:
+                    timesteps = np.array([])
+                timesteps = np.append(timesteps, self._numSteps)
+                np.save(name_timesteps, timesteps)
+
+                plot_rewards(self.batch_size, self.learning_rate, self.gamma, self.gae_lambda)
+                self.reward_sum = 0
+                self.landmark_history = []
+
         return state, reward, done, info
         
     
@@ -248,5 +353,5 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         weight_center_of_mass = 0.1
         reward += weight_center_of_mass * center_of_mass_diff
 
-        print(reward)
+        #print(reward)
         return reward
