@@ -30,7 +30,7 @@ for alg_str in ['a2c', 'ddpg']:
     env = make_vec_env(CustomHumanoidDeepBulletEnv, n_envs=4, env_kwargs=env_kwargs)
     
     alg = str_to_alg[alg_str]
-    model = alg("MlpPolicy", env, verbose=1, n_steps=1, device='mps')
+    model = alg("MlpPolicy", env, verbose=1, device='mps', learning_rate=3e-4)
         
     model.learn(total_timesteps=100000, progress_bar=True)
     model.save(f"{alg_str}_humanoid_deep_bullet")
