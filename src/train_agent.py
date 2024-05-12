@@ -5,7 +5,8 @@ Code to train the agent using the PPO reinforcement learning algorithm. Uses the
 from env import CustomHumanoidDeepBulletEnv
 
 import gym
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, TD3
+from sb3_contrib import TRPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_checker import check_env
@@ -17,12 +18,12 @@ for batch_size in [32, 64]:
     for learning_rate in [0.0001, 0.0005]:
         for gamma in [0.9, 0.95, 0.99]:
             for gae_lambda in [0.8, 0.9]:
-                env = CustomHumanoidDeepBulletEnv(renders=False, 
+                env = CustomHumanoidDeepBulletEnv(renders=True, 
                                   arg_file='run_humanoid3d_dance_b_args.txt', 
                                   custom_cam_dist=2.2, 
                                   custom_cam_pitch=0, 
                                   custom_cam_yaw=90, 
-                                  video_URL=TARGET_VIDEO_URL,
+                                #   video_URL=TARGET_VIDEO_URL,
                                 #   dataset_pkl_path='bollywood_dance_test.pkl',
                                   dataset_pkl_path='fortnite_floss.pkl',
                                   filename='fortnite_floss',
@@ -32,6 +33,8 @@ for batch_size in [32, 64]:
                                   gamma=gamma,
                                   gae_lambda=gae_lambda)
                 model = PPO("MlpPolicy", env, verbose=1, n_steps=100000, batch_size=batch_size, learning_rate=learning_rate, gamma=gamma, gae_lambda=gae_lambda)
+                # model = TD3("MlpPolicy", env, verbose=1, n_steps=100000, batch_size=batch_size, learning_rate=learning_rate, gamma=gamma, gae_lambda=gae_lambda)
+                # model = TRPO("MlpPolicy", env, verbose=1, n_steps=100000, batch_size=batch_size, learning_rate=learning_rate, gamma=gamma, gae_lambda=gae_lambda)
                 model.learn(total_timesteps=100000, progress_bar=True)
                 model.save("ppo_humanoid_deep_bullet" + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + "_" + str(gae_lambda))
 

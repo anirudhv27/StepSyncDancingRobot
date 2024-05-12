@@ -21,6 +21,7 @@ from plot_rewards import plot_rewards
 
 FRAME_DIFF = 3
 FRAMES_PER_SECOND = 30
+learning_alg = 'PPO'
 
 class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
     # metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
@@ -37,7 +38,8 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
                          time_step=time_step, rescale_actions=rescale_actions, 
                          rescale_observations=rescale_observations)
         
-        
+        self.test_mode = True # initialization fixed
+
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.gamma = gamma
@@ -67,6 +69,12 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         self.landmark_history = []
 
         self.reward_sum = 0
+
+        self.stable_basePos = None
+        self.stable_baseOrn = None
+        self.stable_baseLinVel = None
+        self.stable_baseAngVel = None
+        # will be set to a stable initial pose
 
     def render(self, mode='human', close=False):
         if mode == "human":
@@ -106,51 +114,28 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         rgb_array = rgb_array[:, :, :3]
         return rgb_array
     
-    '''
-    def reset(self):
-        print ("Num steps reset")
-        print (self._numSteps)
-        if self._numSteps is None:
-            self._numSteps = 0
-        if self._numSteps > 0:
-            avg_reward = self.reward_sum / self._numSteps
-            print (self.reward_sum, self._numSteps, avg_reward)
-            name = "tuning/rewards/"
-            name += str(self.batch_size)
-            name += "_" + str(self.learning_rate)
-            name += "_" + str(self.gamma)
-            name += "_" + str(self.gae_lambda)
-            name += ".npy"
-            try:
-                rewards = np.load(name)
-            except FileNotFoundError:
-                rewards = np.array([])
-
-            rewards = np.append(rewards, avg_reward)
-            np.save(name, rewards)
-
-            name_timesteps = "tuning/timesteps/"
-            name_timesteps += str(self.batch_size)
-            name_timesteps += "_" + str(self.learning_rate)
-            name_timesteps += "_" + str(self.gamma)
-            name_timesteps += "_" + str(self.gae_lambda)
-            name_timesteps += ".npy"
-            try:
-                timesteps = np.load(name_timesteps)
-            except FileNotFoundError:
-                timesteps = np.array([])
-            timesteps = np.append(timesteps, self._numSteps)
-            np.save(name_timesteps, timesteps)
-
-            plot_rewards(self.batch_size, self.learning_rate, self.gamma, self.gae_lambda)
-            self.landmark_history = []
-
-            self.reward_sum = 0
-
-        super().reset()
-        '''
+    # def reset(self):
+        # super().reset()
+        # self._internal_env._humanoid.initializePose(self._internal_env._humanoid._poseInterpolator, self._internal_env._humanoid._sim_model, initBase=True)
+        # just initializes the default pose
     
     def step(self, action):
+        if self._numSteps == 0:
+            humanoid = self._internal_env._humanoid
+            phys_model = humanoid._sim_model
+            if self.stable_basePos is None:
+                pose = humanoid._poseInterpolator
+                self.stable_basePos = pose._basePos
+                self.stable_baseOrn = pose._baseOrn
+                self.stable_baseLinVel = pose._baseLinVel
+                self.stable_baseAngVel = pose._baseAngVel
+
+            # self._internal_env._humanoid.initializePose(self._internal_env._humanoid._poseInterpolator, self._internal_env._humanoid._sim_model, initBase=True)
+            
+            humanoid._pybullet_client.resetBasePositionAndOrientation(phys_model, self.stable_basePos,
+                                                              self.stable_baseOrn)
+            humanoid._pybullet_client.resetBaseVelocity(phys_model, self.stable_baseLinVel, self.stable_baseAngVel)
+
         agent_id = self.agent_id
         done = False
 
@@ -171,7 +156,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             if self._numSteps > 0:
                 avg_reward = self.reward_sum / self._numSteps
                 #print (self.reward_sum, self._numSteps, avg_reward)
-                name = "tuning/rewards/ppo"
+                name = f"tuning/rewards/{learning_alg}"
                 name += str(self.batch_size)
                 name += "_" + str(self.learning_rate)
                 name += "_" + str(self.gamma)
@@ -185,7 +170,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
                 rewards = np.append(rewards, avg_reward)
                 np.save(name, rewards)
 
-                name_timesteps = "tuning/timesteps/ppo"
+                name_timesteps = f"tuning/timesteps/{learning_alg}"
                 name_timesteps += str(self.batch_size)
                 name_timesteps += "_" + str(self.learning_rate)
                 name_timesteps += "_" + str(self.gamma)
@@ -215,6 +200,11 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         # Record reward
         reward = self.calc_reward(agent_id, curr_landmarks)
         self.reward_sum += reward
+
+        lower_body_indices = [8, 9, 11, 12, 13, 14, 15, 16, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+        for index in lower_body_indices:
+            pass
+            # action[index] = 0
 
         # Apply control action
         self._internal_env.set_action(agent_id, action)
@@ -251,7 +241,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
                 #print ("logged")
                 avg_reward = self.reward_sum / (self._numSteps)
                 #print (self.reward_sum, self._numSteps, avg_reward)
-                name = "tuning/rewards/ppo"
+                name = f"tuning/rewards/{learning_alg}"
                 name += str(self.batch_size)
                 name += "_" + str(self.learning_rate)
                 name += "_" + str(self.gamma)
@@ -265,7 +255,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
                 rewards = np.append(rewards, avg_reward)
                 np.save(name, rewards)
 
-                name_timesteps = "tuning/timesteps/ppo"
+                name_timesteps = f"tuning/timesteps/{learning_alg}"
                 name_timesteps += str(self.batch_size)
                 name_timesteps += "_" + str(self.learning_rate)
                 name_timesteps += "_" + str(self.gamma)
@@ -334,23 +324,34 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         # calculate reward
         reward = 0
         angle_quat_diff = np.exp(-2 * self.quat_diff_sum(agent_angle, target_angle))
-        weight_angle = 0.65
+        weight_angle = 1e8
         reward += weight_angle * angle_quat_diff
+        print(angle_quat_diff)
 
         pos_diff = np.linalg.norm(agent_pos - target_pos)
         pos_diff = np.exp(-40 * pos_diff)
         weight_pos = 0.15
-        reward += weight_pos * pos_diff
+        # reward += weight_pos * pos_diff
 
         velocity_diff = np.linalg.norm(agent_angle_velocity - target_angle_velocity)
         velocity_diff = np.exp(-0.1 * velocity_diff)
         weight_velocity = 0.1
-        reward += weight_velocity * velocity_diff
+        # reward += weight_velocity * velocity_diff
 
         center_of_mass_diff = np.linalg.norm(agent_center_of_mass - target_center_of_mass)
         center_of_mass_diff = np.exp(-10 * center_of_mass_diff)
         weight_center_of_mass = 0.1
-        reward += weight_center_of_mass * center_of_mass_diff
+        # reward += weight_center_of_mass * center_of_mass_diff
+
+
+        # Calculate reward for upright position
+        # link to pybullet client: https://github.com/bulletphysics/bullet3/blob/master/examples/pybullet/gym/pybullet_utils/bullet_client.py
+        rootPosSim, rootOrnSim = self._internal_env._humanoid._pybullet_client.getBasePositionAndOrientation(self._internal_env._humanoid._sim_model)
+        print(rootPosSim)
+        upright_reward = rootPosSim[2]  # Z coordinate of the root position
+        weight_upright = 10  # Adjust weight as needed
+        # reward += weight_upright * upright_reward
+        reward += (upright_reward > 0.4) * weight_upright
 
         #print(reward)
         return reward
