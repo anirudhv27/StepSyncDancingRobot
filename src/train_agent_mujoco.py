@@ -24,10 +24,10 @@ for alg_str in str_to_alg.keys():
         'alg_name': alg_str
     }
     
-    env = make_vec_env(CustomMujocoEnv, n_envs=4, env_kwargs=env_kwargs)
+    env = make_vec_env(CustomMujocoEnv, n_envs=1, env_kwargs=env_kwargs)
     
     alg = str_to_alg[alg_str]
-    model = alg("MlpPolicy", env, verbose=1, n_steps=1, device='cpu', learning_rate=3e-4)
+    model = alg("MlpPolicy", env, verbose=1, device='cpu', learning_rate=3e-4)
         
     model.learn(total_timesteps=100000, progress_bar=True)
     model.save(f"{alg_str}_humanoid_deep_bullet")

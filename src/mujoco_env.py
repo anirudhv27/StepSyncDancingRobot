@@ -168,5 +168,5 @@ class CustomMujocoEnv(HumanoidMujocoEnv):
         if self.render_mode == "human":
             self.render()
             
-        print(reward, self.reward_sum, self.num_steps)
+        print(reward, self.reward_sum, self._numSteps)
         return observation, reward, terminated, False, info
