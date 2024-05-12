@@ -10,6 +10,7 @@ from gymnasium.spaces import Box
 
 import mediapipe as mp
 import pickle
+import matplotlib.pyplot as plt
 
 from utils.videoProcessing import generate_dataset_from_url
 
@@ -112,6 +113,7 @@ class CustomMujocoEnv(HumanoidMujocoEnv):
         # Compute reward from current position after action
         agent_id = 0 # placeholder
         obs_image = self.render().astype('uint8')
+        plt.imsave('./image.png', obs_image)
         curr_landmarks = extract_landmarks_from_frame(obs_image, self.pose)
         
         if curr_landmarks is None:
@@ -131,6 +133,7 @@ class CustomMujocoEnv(HumanoidMujocoEnv):
             self.landmark_history.append(curr_landmarks)
         
         reward = calc_reward(self.target_poses, self._numSteps, agent_id, curr_landmarks, terminated)
+        reward += (5.0 if not terminated else 0.0)
         self.reward_sum += reward
         
         if terminated:
