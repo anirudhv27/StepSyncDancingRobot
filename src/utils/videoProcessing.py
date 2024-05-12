@@ -3,6 +3,7 @@ import mediapipe as mp
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from pytube import YouTube
+
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from moviepy.video.fx.all import crop
 import os
@@ -91,7 +92,7 @@ def process_video_to_landmarks(input_video_path, FRAME_DIFF, FRAMES_PER_SECOND):
             break
         
         # Convert the BGR image to RGB.
-        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB).astype(np.uint8)
         image.flags.writeable = False
         height, width, channels = image.shape
         
