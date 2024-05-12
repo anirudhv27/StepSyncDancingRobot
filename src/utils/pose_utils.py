@@ -111,7 +111,7 @@ def extract_landmarks_from_frame(frame, mediapipe_pose):
     try:
         points = mediapipe_pose.process(frame).pose_landmarks.landmark
     except:
-        print('could not extract points from this frame')
+        # print('could not extract points from this frame')
         return None
     
     pos_dict["origin"] = [points[0].x, points[0].y, points[0].z]

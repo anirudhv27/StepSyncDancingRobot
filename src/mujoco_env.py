@@ -1,57 +1,78 @@
-import gym
-from collections import UserDict
-import gym.envs.registration
-
-from utils.pose_utils import compute_velocities_between_poses, extract_landmarks_from_frame
-
-registry = UserDict(gym.envs.registration.registry)
-registry.env_specs = gym.envs.registration.registry
-gym.envs.registration.registry = registry
-
-import pybullet_envs
-from pybullet_envs.deep_mimic.gym_env.deep_mimic_env import HumanoidDeepBulletEnv
 from gymnasium.envs.mujoco.humanoid_v4 import HumanoidEnv as HumanoidMujocoEnv
+import numpy as np
 
-from utils.videoProcessing import generate_dataset_from_url
-import matplotlib.pyplot as plt
+from plot_rewards import plot_rewards
+from utils.pose_utils import compute_velocities_between_poses, extract_landmarks_from_frame
+from utils.reward_utils import calc_reward
+from gymnasium import utils
+from gymnasium.envs.mujoco import MujocoEnv
+from gymnasium.spaces import Box
+
 import mediapipe as mp
 import pickle
 
-import numpy as np
-from scipy.spatial.transform import Rotation as R
-from plot_rewards import plot_rewards
+from utils.videoProcessing import generate_dataset_from_url
 
 FRAME_DIFF = 3
 FRAMES_PER_SECOND = 30
 
-import gymnasium as gym
-env = HumanoidMujocoEnv()
+# Todo: modified by ani!
+DEFAULT_CAMERA_CONFIG = {
+    "trackbodyid": 1,
+    "distance": 3.0,
+    "lookat": np.array((0.0, 0.0, 1.0)),
+    "elevation": -15.0,
+    "azimuth": 180
+}
 
-class CustomHumanoidDeepBulletEnv(HumanoidMujocoEnv):
-    # metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': 50}
-    metadata = {'render.modes': ['human', 'rgb_array'], 'video.frames_per_second': FRAMES_PER_SECOND}
-    
-    def __init__(self, renders=False, arg_file='', test_mode=False,
-                 time_step=1./240, rescale_actions=True, rescale_observations=True,
-                 custom_cam_dist=4, custom_cam_pitch=0.1, custom_cam_yaw=45,
-                 video_URL=None, dataset_pkl_path=None, filename='fortnite_floss', alg_name='ppo'):
+class CustomMujocoEnv(HumanoidMujocoEnv):
+    def __init__(self,
+        forward_reward_weight=1.25,
+        ctrl_cost_weight=0.1,
+        healthy_reward=5.0,
+        terminate_when_unhealthy=True,
+        healthy_z_range=(1.0, 2.0),
+        reset_noise_scale=1e-2,
+        exclude_current_positions_from_observation=True,
+        video_URL=None, dataset_pkl_path=None, filename='fortnite_floss', alg_name='ppo',
+        **kwargs
+    ):
+        utils.EzPickle.__init__(
+            self,
+            forward_reward_weight,
+            ctrl_cost_weight,
+            healthy_reward,
+            terminate_when_unhealthy,
+            healthy_z_range,
+            reset_noise_scale,
+            exclude_current_positions_from_observation,
+            video_URL, dataset_pkl_path, filename, alg_name,
+            **kwargs,
+        )
+
+        self._forward_reward_weight = forward_reward_weight
+        self._ctrl_cost_weight = ctrl_cost_weight
+        self._healthy_reward = healthy_reward
+        self._terminate_when_unhealthy = terminate_when_unhealthy
+        self._healthy_z_range = healthy_z_range
+
+        self._reset_noise_scale = reset_noise_scale
+
+        self._exclude_current_positions_from_observation = (
+            exclude_current_positions_from_observation
+        )
+
+        if exclude_current_positions_from_observation:
+            observation_space = Box(
+                low=-np.inf, high=np.inf, shape=(376,), dtype=np.float64
+            )
+        else:
+            observation_space = Box(
+                low=-np.inf, high=np.inf, shape=(378,), dtype=np.float64
+            )
         
-        self._numSteps = 0
-        
-        super().__init__(renders=renders, arg_file=arg_file, test_mode=test_mode,
-                         time_step=time_step, rescale_actions=rescale_actions, 
-                         rescale_observations=rescale_observations)
-        
-        
-        # self.batch_size = batch_size
-        # self.learning_rate = learning_rate
-        # self.gamma = gamma
-        # self.gae_lambda = gae_lambda
         self.alg_name = alg_name
-
-        self._cam_dist = custom_cam_dist
-        self._cam_pitch = custom_cam_pitch
-        self._cam_yaw = custom_cam_yaw
+        self._numSteps = 0
         
         # Initialize mediapipe estimator
         print('Initializing mediapipe estimator...')
@@ -73,91 +94,31 @@ class CustomHumanoidDeepBulletEnv(HumanoidMujocoEnv):
         self.landmark_history = []
         self.reward_sum = 0
 
-    def render(self, mode='human', close=False):
-        if mode == "human":
-            self._renders = True
-        if mode != "rgb_array":
-            return np.array([])
-        human = self._internal_env._humanoid
-        base_pos, orn = self._p.getBasePositionAndOrientation(human._sim_model)
-        base_pos = np.asarray(base_pos)
-        # track the position
-        base_pos[1] += 0.1
-        rpy = self._p.getEulerFromQuaternion(orn)  # rpy, in radians
-        rpy = 180 / np.pi * np.asarray(rpy)  # convert rpy in degrees
-
-        if (not self._p == None):
-            view_matrix = self._p.computeViewMatrixFromYawPitchRoll(
-                cameraTargetPosition=base_pos,
-                distance=self._cam_dist,
-                yaw=self._cam_yaw,
-                pitch=self._cam_pitch,
-                roll=0,
-                upAxisIndex=1)
-            proj_matrix = self._p.computeProjectionMatrixFOV(fov=60,
-                    aspect=float(self._render_width) / self._render_height,
-                    nearVal=0.1,
-                    farVal=100.0)
-            (_, _, px, _, _) = self._p.getCameraImage(
-                width=self._render_width,
-                height=self._render_height,
-                renderer=self._p.ER_BULLET_HARDWARE_OPENGL,
-                viewMatrix=view_matrix,
-                projectionMatrix=proj_matrix)
-        else:
-            px = np.array([[[255,255,255,255]]*self._render_width]*self._render_height, dtype=np.uint8)
-        rgb_array = np.array(px, dtype=np.uint8)
-        rgb_array = np.reshape(np.array(px), (self._render_height, self._render_width, -1))
-        rgb_array = rgb_array[:, :, :3]
-        return rgb_array
-    
+        MujocoEnv.__init__(
+            self,
+            "humanoid.xml",
+            5,
+            observation_space=observation_space,
+            default_camera_config=DEFAULT_CAMERA_CONFIG,
+            **kwargs,
+        )
+        
     def step(self, action):
-        agent_id = self.agent_id
-        done = False
-
-        if self._rescale_actions:
-            # Rescale the action
-            mean = -self._action_offset
-            std = 1./self._action_scale
-            action = action * std + mean
-        
-         # Apply control action
-        self._internal_env.set_action(agent_id, action)
-
-        start_time = self._internal_env.t
-
-        # step sim
-        for i in range(self._num_env_steps):
-            self._internal_env.update(self._time_step)
-
-        elapsed_time = self._internal_env.t - start_time
-
-
-        # Record state
-        self.state = self._internal_env.record_state(agent_id)
-        
-        if self._rescale_observations:
-            state = np.array(self.state)
-            mean = -self._state_offset
-            std = 1./self._state_scale 
-            state = (state - mean) / (std + 1e-8)
-        
+        self.do_simulation(action, self.frame_skip)
         self._numSteps += 1
-        # Record done if humanoid has fallen
-        done = self._internal_env.is_episode_end()
+        observation = self._get_obs()
+        terminated = self.terminated
         
-        # Compute reward from this new position
-        # Compute the current pose landmark of the agent, and add to the 
-        # Store a history of previous landmarks
-        obs_image = self.render(mode='rgb_array').astype('uint8')        
+        # Compute reward from current position after action
+        agent_id = 0 # placeholder
+        obs_image = self.render().astype('uint8')
         curr_landmarks = extract_landmarks_from_frame(obs_image, self.pose)
-
+        
         if curr_landmarks is None:
-            # print('can\'t read landmarks from this state!')
-            done = True # set that i want to reset
-            
-        elif done:
-            # print('humanoid has fallen; do not compute reward')
+            # print('cant read pose from this state')
+            terminated = True
+        elif terminated:
+            # print('humanoid has fallen, do not compute reward!')
             pass
         else:
             if len(self.landmark_history) >= FRAME_DIFF:
@@ -168,21 +129,14 @@ class CustomHumanoidDeepBulletEnv(HumanoidMujocoEnv):
                     curr_landmarks['angle_velocity'] = velocity_landmarks['angle_velocity']
         
             self.landmark_history.append(curr_landmarks)
-            # Don't reset, instead continue to append to this episode's history
         
-        # Compute reward from the landmarks that are read
-        reward = self.calc_reward(agent_id, curr_landmarks, done) # if done, returns a large negative number
-        
+        reward = calc_reward(self.target_poses, self._numSteps, agent_id, curr_landmarks, terminated)
         self.reward_sum += reward
-        if done:
+        
+        if terminated:
             # About to reset, which means that we need to save the average rewards and timesteps to failure
             ep_avg_reward = self.reward_sum / self._numSteps # only the average reward until failing
-            name = f"tuning/rewards/{self.alg_name}"
-            # name += str(self.batch_size)
-            # name += "_" + str(self.learning_rate)
-            # name += "_" + str(self.gamma)
-            # name += "_" + str(self.gae_lambda)
-            name += ".npy"
+            name = f"tuning/rewards/mujoco_{self.alg_name}.npy"
             try:
                 rewards = np.load(name)
             except FileNotFoundError:
@@ -191,12 +145,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidMujocoEnv):
             rewards = np.append(rewards, ep_avg_reward)
             np.save(name, rewards)
 
-            name_timesteps = f"tuning/timesteps/{self.alg_name}"
-            # name_timesteps += str(self.batch_size)
-            # name_timesteps += "_" + str(self.learning_rate)
-            # name_timesteps += "_" + str(self.gamma)
-            # name_timesteps += "_" + str(self.gae_lambda)
-            name_timesteps += ".npy"
+            name_timesteps = f"tuning/timesteps/mujoco_{self.alg_name}.npy"
             try:
                 timesteps = np.load(name_timesteps)
             except FileNotFoundError:
@@ -204,84 +153,16 @@ class CustomHumanoidDeepBulletEnv(HumanoidMujocoEnv):
             timesteps = np.append(timesteps, self._numSteps)
             np.save(name_timesteps, timesteps)
 
-            plot_rewards(self.alg_name)
+            plot_rewards('mujoco', self.alg_name)
             
             # After saving, we want to reset episode-level statistics
+            self._numSteps = 0
             self.reward_sum = 0
             self.landmark_history = []
-
+        
         info = {}
-        # print(reward, self._numSteps, self.reward_sum)
-        # if done: print('Done and logged!')
 
-        return state, reward, done, info
-        
-    
-    def quat_diff_sum(self, quat1, quat2):
-        quat_diff = 0
-        for i in range (quat1.shape[0]):
-            # Convert the quaternions to rotation objects
-            r1 = R.from_quat(quat1[i])
-            r2 = R.from_quat(quat2[i])
-            # Calculate the difference between the quaternions
-            diff = (r1.inv() * r2).as_quat()
+        if self.render_mode == "human":
+            self.render()
             
-            # Calculate the magnitude of the difference
-            magnitude = np.linalg.norm(diff, axis=0)
-
-            quat_diff += magnitude
-        return quat_diff
-    
-    def calc_reward(self, agent_id, curr_landmarks, ep_done):
-        # get pose of the current position
-        if ep_done or curr_landmarks is None: # we are about to reset the environment: what reward to give?
-            return 0 # dont want to put in these type of positions!
-        
-        # get target pose
-        target_pose = self.target_poses[self._numSteps]
-
-        agent_pos = np.array(list(curr_landmarks['pos'].values()))
-        target_pos = np.array(list(target_pose['pos'].values()))
-        
-        agent_angle = np.array(list(curr_landmarks['angle'].values()))
-        target_angle = np.array(list(target_pose['angle'].values()))
-        
-        try:
-            agent_velocity = np.array(list(curr_landmarks['velocity'].values()))
-            target_velocity = np.array(list(target_pose['velocity'].values()))
-        except:
-            agent_velocity = np.zeros(3)
-            target_velocity = np.zeros(3)
-        
-        try:
-            agent_angle_velocity = np.array(list(curr_landmarks['angle_velocity'].values()))
-            target_angle_velocity = np.array(list(target_pose['angle_velocity'].values()))
-        except:
-            agent_angle_velocity = np.zeros(3)
-            target_angle_velocity = np.zeros(3)
-        
-        agent_center_of_mass = np.array(list(curr_landmarks['center_of_mass']))
-        target_center_of_mass = np.array(list(target_pose['center_of_mass']))
-
-        # calculate reward
-        reward = 0
-        angle_quat_diff = np.exp(-2 * self.quat_diff_sum(agent_angle, target_angle))
-        weight_angle = 0.65
-        reward += weight_angle * angle_quat_diff
-
-        pos_diff = np.linalg.norm(agent_pos - target_pos)
-        pos_diff = np.exp(-40 * pos_diff)
-        weight_pos = 0.15
-        reward += weight_pos * pos_diff
-
-        velocity_diff = np.linalg.norm(agent_angle_velocity - target_angle_velocity)
-        velocity_diff = np.exp(-0.1 * velocity_diff)
-        weight_velocity = 0.1
-        reward += weight_velocity * velocity_diff
-
-        center_of_mass_diff = np.linalg.norm(agent_center_of_mass - target_center_of_mass)
-        center_of_mass_diff = np.exp(-10 * center_of_mass_diff)
-        weight_center_of_mass = 0.1
-        reward += weight_center_of_mass * center_of_mass_diff
-
-        return reward
+        return observation, reward, terminated, False, info
