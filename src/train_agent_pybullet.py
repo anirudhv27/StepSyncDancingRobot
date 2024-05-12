@@ -5,7 +5,7 @@ Code to train the agent using the PPO reinforcement learning algorithm. Uses the
 from pybullet_env import CustomHumanoidDeepBulletEnv
 
 import gym
-from stable_baselines3 import PPO, A2C, DDPG
+from stable_baselines3 import PPO, A2C, DDPG, SAC, TD3
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_checker import check_env
@@ -13,21 +13,9 @@ from stable_baselines3.common.env_checker import check_env
 # TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
 TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=PRdxgTgHAqA'
 
-str_to_alg = {'a2c': A2C, 'ddpg': DDPG}
+str_to_alg = {'ppo': PPO, 'a2c': A2C, 'ddpg': DDPG, 'sac': SAC, 'td3': TD3}
 
 for alg_str in ['a2c', 'ddpg']:
-    # env = CustomHumanoidDeepBulletEnv(renders=False, 
-    #     arg_file='run_humanoid3d_dance_b_args.txt', 
-    #     custom_cam_dist=2.2, 
-    #     custom_cam_pitch=0, 
-    #     custom_cam_yaw=90, 
-    #     # video_URL=TARGET_VIDEO_URL,
-    #     #   dataset_pkl_path='bollywood_dance_test.pkl',
-    #     dataset_pkl_path='fortnite_floss.pkl',
-    #     filename='fortnite_floss',
-    #     # filename = 'bollywood_dance_test'
-    #     alg_name=alg_str)
-    
     env_kwargs = {
         'arg_file': 'run_humanoid3d_dance_b_args.txt', 
         'custom_cam_dist': 2.2, 

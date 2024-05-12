@@ -5,7 +5,7 @@ Code to train the agent using the PPO reinforcement learning algorithm. Uses the
 from mujoco_env import CustomMujocoEnv
 
 import gym
-from stable_baselines3 import PPO, A2C, DDPG
+from stable_baselines3 import PPO, A2C, DDPG, SAC, TD3
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_checker import check_env
@@ -13,7 +13,7 @@ from stable_baselines3.common.env_checker import check_env
 # TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
 TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=PRdxgTgHAqA'
 
-str_to_alg = {'a2c': A2C, 'ddpg': DDPG}
+str_to_alg = {'ppo': PPO, 'a2c': A2C, 'ddpg': DDPG, 'sac': SAC, 'td3': TD3}
 
 for alg_str in ['a2c', 'ddpg']:
     env_kwargs = {
