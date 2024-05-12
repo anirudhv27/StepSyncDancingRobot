@@ -29,7 +29,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
     def __init__(self, renders=False, arg_file='', test_mode=False,
                  time_step=1./240, rescale_actions=True, rescale_observations=True,
                  custom_cam_dist=4, custom_cam_pitch=0.1, custom_cam_yaw=45,
-                 video_URL=None, dataset_pkl_path=None, filename='fortnite_floss', batch_size=32, learning_rate=0.003, gamma=0.99, gae_lambda=0.95, alg_name='ppo'):
+                 video_URL=None, dataset_pkl_path=None, filename='fortnite_floss', alg_name='ppo'):
         
         self._numSteps = 0
         
@@ -38,10 +38,10 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
                          rescale_observations=rescale_observations)
         
         
-        self.batch_size = batch_size
-        self.learning_rate = learning_rate
-        self.gamma = gamma
-        self.gae_lambda = gae_lambda
+        # self.batch_size = batch_size
+        # self.learning_rate = learning_rate
+        # self.gamma = gamma
+        # self.gae_lambda = gae_lambda
         self.alg_name = alg_name
 
         self._cam_dist = custom_cam_dist
@@ -148,11 +148,12 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         curr_landmarks = extract_landmarks_from_frame(obs_image, self.pose)
 
         if curr_landmarks is None:
-            print('can\'t read landmarks from this state!')
+            # print('can\'t read landmarks from this state!')
             done = True # set that i want to reset
             
         elif done:
-            print('humanoid has fallen; do not compute reward')
+            # print('humanoid has fallen; do not compute reward')
+            pass
         else:
             if len(self.landmark_history) >= FRAME_DIFF:
                 prev_landmarks = self.landmark_history[-FRAME_DIFF]
@@ -171,10 +172,10 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         if done:
             # About to reset, which means that we need to save the average rewards and timesteps to failure
             ep_avg_reward = self.reward_sum / self._numSteps # only the average reward until failing
-            name = f"tuning/rewards/{self.alg_name}/"
-            name += str(self.batch_size)
-            name += "_" + str(self.learning_rate)
-            name += "_" + str(self.gamma)
+            name = f"tuning/rewards/{self.alg_name}"
+            # name += str(self.batch_size)
+            # name += "_" + str(self.learning_rate)
+            # name += "_" + str(self.gamma)
             # name += "_" + str(self.gae_lambda)
             name += ".npy"
             try:
@@ -185,10 +186,10 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             rewards = np.append(rewards, ep_avg_reward)
             np.save(name, rewards)
 
-            name_timesteps = f"tuning/timesteps/{self.alg_name}/"
-            name_timesteps += str(self.batch_size)
-            name_timesteps += "_" + str(self.learning_rate)
-            name_timesteps += "_" + str(self.gamma)
+            name_timesteps = f"tuning/timesteps/{self.alg_name}"
+            # name_timesteps += str(self.batch_size)
+            # name_timesteps += "_" + str(self.learning_rate)
+            # name_timesteps += "_" + str(self.gamma)
             # name_timesteps += "_" + str(self.gae_lambda)
             name_timesteps += ".npy"
             try:
@@ -198,15 +199,15 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             timesteps = np.append(timesteps, self._numSteps)
             np.save(name_timesteps, timesteps)
 
-            plot_rewards(self.batch_size, self.learning_rate, self.gamma, self.gae_lambda, self.alg_name)
+            plot_rewards(self.alg_name)
             
             # After saving, we want to reset episode-level statistics
             self.reward_sum = 0
             self.landmark_history = []
 
         info = {}
-        print(reward, self._numSteps, self.reward_sum)
-        if done: print('Done and logged!')
+        # print(reward, self._numSteps, self.reward_sum)
+        # if done: print('Done and logged!')
 
         return state, reward, done, info
         
@@ -229,7 +230,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
     def calc_reward(self, agent_id, curr_landmarks, ep_done):
         # get pose of the current position
         if ep_done or curr_landmarks is None: # we are about to reset the environment: what reward to give?
-            return -100 # dont want to put in these type of positions!
+            return 0 # dont want to put in these type of positions!
         
         # get target pose
         target_pose = self.target_poses[self._numSteps]

@@ -3,10 +3,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def plot_rewards(batch_size, learning_rate, gamma, gae_lambda, alg_name):
-    reward_name = "tuning/rewards/" + alg_name + '/' + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + ".npy"
+def plot_rewards(alg_name):
+    reward_name = "tuning/rewards/" + alg_name + ".npy"
     rewards = np.load(reward_name)
-    timesteps_name = "tuning/timesteps/" + alg_name + '/' + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + ".npy"
+    timesteps_name = "tuning/timesteps/" + alg_name + ".npy"
     timesteps = np.load(timesteps_name)
 
     plt.figure()
@@ -18,7 +18,7 @@ def plot_rewards(batch_size, learning_rate, gamma, gae_lambda, alg_name):
     plt.ylabel('Reward')
 
     # Save the plot as a PNG file
-    save_name = "tuning/reward_plot/" + alg_name + '/' + str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + ".png"
+    save_name = "tuning/reward_plot/" + alg_name + ".png"
     plt.savefig(save_name)
 
     # reset the plot
@@ -28,5 +28,5 @@ def plot_rewards(batch_size, learning_rate, gamma, gae_lambda, alg_name):
     plt.title('Timesteps Lasted over episodes')
     plt.xlabel('Episode')
     plt.ylabel('Timesteps')
-    save_name = "tuning/timesteps_plot/" + alg_name + '/' +  str(batch_size) + "_" + str(learning_rate) + "_" + str(gamma) + ".png"
+    save_name = "tuning/timesteps_plot/" + alg_name + ".png"
     plt.savefig(save_name)
