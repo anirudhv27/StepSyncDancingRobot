@@ -15,7 +15,7 @@ TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=PRdxgTgHAqA'
 
 str_to_alg = {'ppo': PPO, 'a2c': A2C, 'ddpg': DDPG, 'sac': SAC, 'td3': TD3}
 
-for alg_str in ['a2c', 'ddpg']:
+for alg_str in ['ppo', 'a2c']:
     env_kwargs = {
         'arg_file': 'run_humanoid3d_dance_b_args.txt', 
         'custom_cam_dist': 2.2, 

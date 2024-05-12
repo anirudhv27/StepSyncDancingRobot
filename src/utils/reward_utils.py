@@ -1,20 +1,26 @@
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+import pyquaternion as pyq
 
 def quat_diff_sum(quat1, quat2):
-        quat_diff = 0
-        for i in range (quat1.shape[0]):
-            # Convert the quaternions to rotation objects
-            r1 = R.from_quat(quat1[i])
-            r2 = R.from_quat(quat2[i])
-            # Calculate the difference between the quaternions
-            diff = (r1.inv() * r2).as_quat()
-            
-            # Calculate the magnitude of the difference
-            magnitude = np.linalg.norm(diff, axis=0)
+    quat_diff = 0
+    for i in range (quat1.shape[0]):
+        # Convert the quaternions to rotation objects
 
-            quat_diff += magnitude
-        return quat_diff
+
+
+        r1 = R.from_quat(quat1[i])
+        r2 = R.from_quat(quat2[i])
+        # Calculate the difference between the quaternions
+        diff = (r1.inv() * r2).as_quat()
+        
+        # Calculate the magnitude of the difference
+        magnitude = np.linalg.norm(diff, axis=0)
+        print('quat diff', i, magnitude)
+
+        quat_diff += magnitude
+
+    return quat_diff
     
 def calc_reward(target_poses, numSteps, agent_id, curr_landmarks, ep_done):
     # get pose of the current position
@@ -50,23 +56,38 @@ def calc_reward(target_poses, numSteps, agent_id, curr_landmarks, ep_done):
 
     # calculate reward
     reward = 0
-    angle_quat_diff = np.exp(-2 * quat_diff_sum(agent_angle, target_angle))
-    weight_angle = 0.65
+    angle_quat_diff = quat_diff_sum(agent_angle, target_angle)
+
+    # print(agent_angle)
+    # print(target_angle)
+
+    print('quat_diff', angle_quat_diff)
+    angle_quat_diff = np.exp(-2 * angle_quat_diff)
+    weight_angle = 0.65 * 1e8
     reward += weight_angle * angle_quat_diff
 
-    pos_diff = np.linalg.norm(agent_pos - target_pos)
-    pos_diff = np.exp(-40 * pos_diff)
+    pos_diff = np.linalg.norm(agent_pos - target_pos, axis=1).mean()
+    print('pos_diff', pos_diff)
+    pos_diff = np.exp(-2 * pos_diff)
     weight_pos = 0.15
     reward += weight_pos * pos_diff
 
     velocity_diff = np.linalg.norm(agent_angle_velocity - target_angle_velocity)
-    velocity_diff = np.exp(-0.1 * velocity_diff)
+    print('velocity_diff', velocity_diff)
+    velocity_diff = np.exp(-2 * velocity_diff)
     weight_velocity = 0.1
     reward += weight_velocity * velocity_diff
 
     center_of_mass_diff = np.linalg.norm(agent_center_of_mass - target_center_of_mass)
+    print('center_of_mass_diff', center_of_mass_diff)
     center_of_mass_diff = np.exp(-10 * center_of_mass_diff)
     weight_center_of_mass = 0.1
     reward += weight_center_of_mass * center_of_mass_diff
+
+    print ("\nRewards")
+    print (f"angle: {angle_quat_diff} {angle_quat_diff * weight_angle}")
+    print (f"pos: {pos_diff} {pos_diff * weight_pos}")
+    print (f"velocity: {velocity_diff} {velocity_diff * weight_velocity}")
+    print (f"center_of_mass: {center_of_mass_diff} {center_of_mass_diff * weight_center_of_mass}")
 
     return reward

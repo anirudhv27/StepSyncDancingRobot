@@ -148,6 +148,8 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         obs_image = self.render(mode='rgb_array').astype('uint8')        
         curr_landmarks = extract_landmarks_from_frame(obs_image, self.pose)
 
+
+
         if curr_landmarks is None:
             # print('can\'t read landmarks from this state!')
             done = True # set that i want to reset
@@ -173,7 +175,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
         if done:
             # About to reset, which means that we need to save the average rewards and timesteps to failure
             ep_avg_reward = self.reward_sum / self._numSteps # only the average reward until failing
-            name = f"tuning/rewards/{self.alg_name}"
+            name = f"tuning/rewards/pybullet_{self.alg_name}"
             # name += str(self.batch_size)
             # name += "_" + str(self.learning_rate)
             # name += "_" + str(self.gamma)
@@ -187,7 +189,7 @@ class CustomHumanoidDeepBulletEnv(HumanoidDeepBulletEnv):
             rewards = np.append(rewards, ep_avg_reward)
             np.save(name, rewards)
 
-            name_timesteps = f"tuning/timesteps/{self.alg_name}"
+            name_timesteps = f"tuning/timesteps/pybullet_{self.alg_name}"
             # name_timesteps += str(self.batch_size)
             # name_timesteps += "_" + str(self.learning_rate)
             # name_timesteps += "_" + str(self.gamma)

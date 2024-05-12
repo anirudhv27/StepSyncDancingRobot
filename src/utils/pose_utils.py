@@ -7,6 +7,7 @@ import numpy as np
 import math
 from scipy.spatial.transform import Rotation as R
 import matplotlib.pyplot as plt
+import pprint
 
 def compute_angle_3d(a_ind, b_ind, c_ind, points):
     """
@@ -127,12 +128,18 @@ def extract_landmarks_from_frame(frame, mediapipe_pose):
     pos_dict["left_ankle"] = [points[27].x, points[27].y, points[27].z]
     pos_dict["right_wrist"] = [points[16].x, points[16].y, points[16].z]
     pos_dict["left_wrist"] = [points[15].x, points[15].y, points[15].z]
+
+    for key in pos_dict.keys():
+        pos_dict[key][2] = 0
     
     end_eff_pos_dict["origin"] = [points[0].x, points[0].y, points[0].z]
     end_eff_pos_dict["right_ankle"] = [points[28].x, points[28].y, points[28].z]
     end_eff_pos_dict["left_ankle"] = [points[27].x, points[27].y, points[27].z]
     end_eff_pos_dict["right_wrist"] = [points[16].x, points[16].y, points[16].z]
     end_eff_pos_dict["left_wrist"] = [points[15].x, points[15].y, points[15].z]
+
+    for key in end_eff_pos_dict.keys():
+        pos_dict[key][2] = 0
 
     angles_dict["right_shoulder"] = compute_angle_3d(14, 12, 24, points)
     angles_dict["left_shoulder"] = compute_angle_3d(13, 11, 23, points)
