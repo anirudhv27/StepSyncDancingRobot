@@ -14,7 +14,7 @@ def quat_diff_mean(quat1, quat2):
         
         # Calculate the magnitude of the difference
         angle = np.linalg.norm(rot_vec, axis=0)
-        print('quat diff', i, angle)
+        # print('quat diff', i, angle)
 
         quat_diff += angle
     
@@ -76,10 +76,10 @@ def calc_reward(target_poses, numSteps, agent_id, curr_landmarks, ep_done):
     weight_center_of_mass = 0.1
     reward += weight_center_of_mass * center_of_mass_diff
 
-    print ("\nRewards")
-    print (f"angle: {angle_quat_diff} {angle_quat_diff * weight_angle}")
-    print (f"angular velocity: {velocity_diff} {velocity_diff * weight_velocity}")
-    print (f"pos: {pos_diff} {pos_diff * weight_pos}")
-    print (f"center_of_mass: {center_of_mass_diff} {center_of_mass_diff * weight_center_of_mass}")
+    # print ("\nRewards")
+    # print (f"angle: {angle_quat_diff} {angle_quat_diff * weight_angle}")
+    # print (f"angular velocity: {velocity_diff} {velocity_diff * weight_velocity}")
+    # print (f"pos: {pos_diff} {pos_diff * weight_pos}")
+    # print (f"center_of_mass: {center_of_mass_diff} {center_of_mass_diff * weight_center_of_mass}")
 
     return reward

@@ -13,7 +13,7 @@ from stable_baselines3.common.env_checker import check_env
 # TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
 TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=PRdxgTgHAqA'
 
-str_to_alg = {'ppo': PPO, 'a2c': A2C, 'ddpg': DDPG, 'sac': SAC, 'td3': TD3}
+str_to_alg = {'a2c': A2C, 'ddpg': DDPG, 'ppo': PPO, 'sac': SAC, 'td3': TD3}
 
 for alg_str in str_to_alg.keys():
     env_kwargs = {
@@ -27,7 +27,7 @@ for alg_str in str_to_alg.keys():
     env = make_vec_env(CustomMujocoEnv, n_envs=4, env_kwargs=env_kwargs)
     
     alg = str_to_alg[alg_str]
-    model = alg("MlpPolicy", env, verbose=1, device='cpu', learning_rate=3e-4)
+    model = alg("MlpPolicy", env, verbose=1, n_steps=1, device='cpu', learning_rate=3e-4)
         
     model.learn(total_timesteps=100000, progress_bar=True)
     model.save(f"{alg_str}_humanoid_deep_bullet")
