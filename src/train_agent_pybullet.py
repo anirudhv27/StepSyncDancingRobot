@@ -15,7 +15,7 @@ TARGET_VIDEO_URL = 'https://www.youtube.com/watch?v=PRdxgTgHAqA'
 
 str_to_alg = {'ppo': PPO, 'a2c': A2C, 'ddpg': DDPG, 'sac': SAC, 'td3': TD3}
 
-for alg_str in ['ppo', 'a2c']:
+for alg_str in ['ppo', 'sac', 'a2c', 'ddpg', 'td3']:
     env_kwargs = {
         'arg_file': 'run_humanoid3d_dance_b_args.txt', 
         'custom_cam_dist': 2.2, 
@@ -30,7 +30,7 @@ for alg_str in ['ppo', 'a2c']:
     env = make_vec_env(CustomHumanoidDeepBulletEnv, n_envs=4, env_kwargs=env_kwargs)
     
     alg = str_to_alg[alg_str]
-    model = alg("MlpPolicy", env, verbose=1, device='mps')
-        
+    model = alg("MlpPolicy", env, verbose=1, device='mps', n_steps = 32)
+    
     model.learn(total_timesteps=100000, progress_bar=True)
     model.save(f"{alg_str}_humanoid_deep_bullet")

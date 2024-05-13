@@ -16,20 +16,27 @@ model.save(f"{alg_str}_humanoid_deep_bullet")
 
 
 # Enjoy trained agent
+
+frames = []
 obs = env.reset()
-for i in range(1):
-    action = 
+for i in range(60):
+    action = env.action_space.sample()
     obs, reward, done, _, info = env.step(action)
     obs_image = env.render().astype('uint8')
-    print(obs_image.shape)    
+    frames.append(obs_image)
+    print(obs_image.shape)
     print('im showing')
     
-    plt.imsave('./imagetest.png', obs_image)
+    #plt.imsave('./imagetest' + str(i) + '.png', obs_image)
     
     print('im showed')
     
     if done:
       obs = env.reset()
+
+# given the list of frames, save as a gif
+import imageio
+imageio.mimsave('./imagetest.gif', frames)
 
 print('end!')
 env.close()
