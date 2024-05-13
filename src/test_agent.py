@@ -7,36 +7,26 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_checker import check_env
 import matplotlib.pyplot as plt
 
+# Load the trained model
+model = PPO.load("./ppo_humanoid_deep_bullet.zip")
 env = HumanoidMujocoEnv()
 env.render_mode = 'rgb_array'
 
-model = PPO("MlpPolicy", env, verbose=1, device='cpu')
-model.learn(total_timesteps=100000, progress_bar=True)
-model.save(f"{alg_str}_humanoid_deep_bullet")
-
-
 # Enjoy trained agent
-
 frames = []
-obs = env.reset()
-for i in range(60):
-    action = env.action_space.sample()
+obs, _ = env.reset()
+for i in range(150):
+    action, _ = model.predict(obs)
     obs, reward, done, _, info = env.step(action)
     obs_image = env.render().astype('uint8')
     frames.append(obs_image)
-    print(obs_image.shape)
-    print('im showing')
-    
-    #plt.imsave('./imagetest' + str(i) + '.png', obs_image)
-    
-    print('im showed')
     
     if done:
-      obs = env.reset()
+      obs, _ = env.reset()
 
 # given the list of frames, save as a gif
 import imageio
-imageio.mimsave('./imagetest.gif', frames)
+imageio.mimsave('./working_agent.gif', frames)
 
 print('end!')
 env.close()
