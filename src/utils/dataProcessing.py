@@ -117,9 +117,8 @@ if __name__ == '__main__':
     
     danceURL = 'https://www.youtube.com/watch?v=9TWj9I3CKzg'
     # filename = input('What are you labeling this file? ')
-    filename = 'badtameez_dil'
-    input_path = f'../data/{filename}.mp4'
-    output_path = f'../keypoints/{filename}.mp4'
-    download_youtube_video(danceURL, input_path)
+    filename = 'fortnite_floss'
+    input_path = f'../../data/{filename}.mp4'
+    output_path = f'../../keypoints/{filename}.mp4'
     # Example usage:
     landmarks = process_video(input_path, output_path)

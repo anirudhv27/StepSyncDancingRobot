@@ -10,19 +10,19 @@ import matplotlib.pyplot as plt
 env = HumanoidMujocoEnv()
 env.render_mode = 'rgb_array'
 
-# model = PPO("MlpPolicy", env, verbose=1, device='cpu')
-# model.learn(total_timesteps=100000, progress_bar=True)
-# model.save(f"{alg_str}_humanoid_deep_bullet")
+model = PPO("MlpPolicy", env, verbose=1, device='cpu')
+model.learn(total_timesteps=100000, progress_bar=True)
+model.save(f"{alg_str}_humanoid_deep_bullet")
+
 
 # Enjoy trained agent
 obs = env.reset()
 for i in range(1):
-    action = env.action_space.sample()
+    action = 
     obs, reward, done, _, info = env.step(action)
     obs_image = env.render().astype('uint8')
     print(obs_image.shape)    
     print('im showing')
-    
     
     plt.imsave('./imagetest.png', obs_image)
     

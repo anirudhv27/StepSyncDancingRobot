@@ -133,13 +133,13 @@ class CustomMujocoEnv(HumanoidMujocoEnv):
             self.landmark_history.append(curr_landmarks)
         
         reward = calc_reward(self.target_poses, self._numSteps, agent_id, curr_landmarks, terminated)
-        reward += (5.0 if not terminated else 0.0)
+        reward += (0.5 if not terminated else 0.0)
         self.reward_sum += reward
         
         if terminated:
             # About to reset, which means that we need to save the average rewards and timesteps to failure
             ep_avg_reward = self.reward_sum / self._numSteps # only the average reward until failing
-            name = f"tuning/rewards/mujoco_{self.alg_name}.npy"
+            name = f"tuning/rewards/small_reward_mujoco_{self.alg_name}.npy"
             try:
                 rewards = np.load(name)
             except FileNotFoundError:
@@ -148,7 +148,7 @@ class CustomMujocoEnv(HumanoidMujocoEnv):
             rewards = np.append(rewards, ep_avg_reward)
             np.save(name, rewards)
 
-            name_timesteps = f"tuning/timesteps/mujoco_{self.alg_name}.npy"
+            name_timesteps = f"tuning/timesteps/small_reward_mujoco_{self.alg_name}.npy"
             try:
                 timesteps = np.load(name_timesteps)
             except FileNotFoundError:
@@ -168,5 +168,5 @@ class CustomMujocoEnv(HumanoidMujocoEnv):
         if self.render_mode == "human":
             self.render()
             
-        print(reward, self.reward_sum, self._numSteps)
+        # print(reward, self.reward_sum, self._numSteps)
         return observation, reward, terminated, False, info

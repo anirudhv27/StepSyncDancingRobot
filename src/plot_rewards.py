@@ -4,9 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def plot_rewards(env_type, alg_name):
-    reward_name = "tuning/rewards/" + env_type + '_' + alg_name + ".npy"
+    reward_name = "tuning/rewards/small_reward_" + env_type + '_' + alg_name + ".npy"
     rewards = np.load(reward_name)
-    timesteps_name = "tuning/timesteps/" + env_type + '_' + alg_name + ".npy"
+    timesteps_name = "tuning/timesteps/small_reward_" + env_type + '_' + alg_name + ".npy"
     timesteps = np.load(timesteps_name)
 
     plt.figure()
@@ -18,7 +18,7 @@ def plot_rewards(env_type, alg_name):
     plt.ylabel('Reward')
 
     # Save the plot as a PNG file
-    save_name = "tuning/reward_plot/" + env_type + '_' + alg_name + ".png"
+    save_name = "tuning/reward_plot/small_reward_" + env_type + '_' + alg_name + ".png"
     plt.savefig(save_name)
 
     # reset the plot
@@ -28,5 +28,5 @@ def plot_rewards(env_type, alg_name):
     plt.title('Timesteps Lasted over episodes')
     plt.xlabel('Episode')
     plt.ylabel('Timesteps')
-    save_name = "tuning/timesteps_plot/" + env_type + '_' + alg_name + ".png"
+    save_name = "tuning/timesteps_plot/small_reward_" + env_type + '_' + alg_name + ".png"
     plt.savefig(save_name)
